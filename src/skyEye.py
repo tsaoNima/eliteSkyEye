@@ -5,10 +5,8 @@ from Constants import stringConstants
 class SkyEyeDaemon(object):
 	mLog = log.getLogInstance()
 
-	def __init__(self):
+	def __init__(self, logPath=None):
 		self.mLog = log.getLogInstance()	
-
-	def startup(self, logPath=None):
 		#Open the log file!
 		if logPath is not None:
 			self.mLog.setLogFile(stringConstants.kDefaultOutPath)
@@ -31,11 +29,11 @@ class SkyEyeDaemon(object):
 		self.mLog.shutdown()
 
 def main():
-	skyEye = SkyEyeDaemon()
+	skyEye = None
 	
 	#Do startup.
 	try:
-		skyEye.startup()
+		skyEye = SkyEyeDaemon()
 	except:
 		print stringConstants.kErrSkyEyeInitFailed
 		print stringConstants.kFmtReason % sys.exc_info()[0]
