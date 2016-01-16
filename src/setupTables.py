@@ -27,8 +27,8 @@ class SetupTables(object):
 	mLog = log.getLogInstance()
 	stdOut = None
 	
-	def __init__(self):
-		self.mLog.setLogFile("./setupTables.log")
+	def __init__(self, outPath=stringConstants.kSetupTablesDefaultOutPath):
+		self.mLog.setLogFile(outPath)
 		#Attach a default stdout listener.
 		self.stdOut = standardOutput.ConsoleListener()
 		self.mLog.subscribe(self.stdOut)
