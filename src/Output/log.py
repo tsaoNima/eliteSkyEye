@@ -2,13 +2,9 @@ import sys
 from Output.outputBase import OutputBase
 from structs import LogElem
 from structs import LogLevel
+from Output import constants
 
 sLogInstance = None
-kLogBufferMaxLines = 1024
-#All subscribers should print a message with this tag.
-kTagAll = "*"
-#This message is untagged.
-kTagEmpty = ""
 
 class Log(object):
 	#Contains individual log elements.
@@ -37,24 +33,26 @@ class Log(object):
 	def __init__(self, outPath=None):
 		self.logBuffer = []
 		#Preallocate buffer space because I don't want to use append() later.
-		for i in xrange(kLogBufferMaxLines):
-			emptyMsg = LogElem("", LogLevel.Verbose, kTagEmpty)
+		for i in xrange(constants.kLogBufferMaxLines):
+			emptyMsg = LogElem("", LogLevel.Verbose, constants.kTagEmpty)
 			self.logBuffer.append(emptyMsg)
 		self.bufferHead = -1
 		
 		self.subscribers = []
-		if outPath is not None:
-			self.setLogFile(outPath)
-		else:
-			print "Log.__init__(): No log file specified, buffer will not be saved!"
+		self.setLogFile(outPath)
 	
 	'''
 	Closes all resources the log system may have been using.
 	Should only be called at application shutdown.
 	'''
 	def shutdown(self):
+		print constants.kLogInShutdown
+		#Unhook all subscribers.
+		for s in self.subscribers:
+			self.subscribers.remove(s)
+		
+		#Close the output file.
 		if self.outFile is not None:
-			#Close the output file.
 			self.outFile.close()
 	
 	'''
@@ -63,7 +61,7 @@ class Log(object):
 	def subscribe(self, subscriber):
 		#Make sure the subscriber actually is an output module.
 		if not issubclass(subscriber.__class__, OutputBase):
-			print "Log.subscribe(): Can't attach subscriber {0}, subscriber doesn't derive from OutputBase!" % subscriber
+			print constants.kFmtLogSubscribeFailed % subscriber
 			return
 		#Otherwise, add it to the subscriber list.
 		self.subscribers.append(subscriber)
@@ -73,6 +71,7 @@ class Log(object):
 	'''
 	def broadcast(self, msg):
 		assert self.bufferHead >= 0
+		
 		#For each subscriber:
 		for subscriber in self.subscribers:
 			#Does this subscriber have a high enough verbosity?
@@ -85,10 +84,10 @@ class Log(object):
 	Adds the requested message to the log's buffer
 	and broadcasts the message to all interested subscribers.
 	'''
-	def log(self, message, level=LogLevel.Verbose, tag=kTagEmpty):
+	def log(self, message, level=LogLevel.Verbose, tag=constants.kTagEmpty):
 		#Add this line to the buffer:
 		#Do we have space in the buffer?
-		if self.bufferHead >= kLogBufferMaxLines-1:
+		if self.bufferHead >= constants.kLogBufferMaxLines-1:
 			#If not, flush it first.
 			self.flushBuffer()
 		#Now add the line to the buffer.
@@ -106,7 +105,7 @@ class Log(object):
 		if self.outFile is not None:
 			return self.outFile.name
 		else:
-			return "(none)"
+			return constants.kStrNone
 	
 	'''
 	Closes any currently open log file and uses the specified path as the new log file.
@@ -117,26 +116,25 @@ class Log(object):
 		#Is the path valid?
 		if outPath is not None or outPath != "":
 			#Try to open the requested path; rollback if the open failed.
-			print "setLogFile(): Opening log file {0}" % outPath
+			print constants.kFmtLogOpeningLogFile % outPath
 			try:
-				newOutFile = open(outPath, 'a+')
+				newOutFile = open(outPath, constants.kLogFileMode)
 			except:
-				print "setLogFile(): Couldn't open \"{0}\", aborting!" % outPath
-				print "Reason: {0}" % sys.exc_info()[0]
+				print constants.kFmtLogFileOpenFailed % (outPath, sys.exc_info()[0])
 				return
 		#Otherwise early out.
 		else:
-			print "setLogFile(): No log file specified, buffer will not be saved!"
+			print constants.kLogNoFileOpen
 			return
 				
 		#Close any log file we may have been using.
 		if self.outFile is not None:
-			print "setLogFile(): Closing log file {0}" % self.outFile.name
+			print constants.kFmtLogClosingLogFile % self.outFile.name
 			self.outFile.close()
 		
 		#Now set the new output as our buffer's file.
 		self.outFile = newOutFile
-		print "setLogFile(): Switched to log file {0}" % newOutFile
+		print constants.kFmtLogSwitchedLogFile % newOutFile
 		
 '''
 Gets an instance of Log representing the program's log buffer.

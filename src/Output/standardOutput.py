@@ -8,12 +8,13 @@ from structs import LogLevel
 import colorama
 
 #Specifies what color a line should be based on its verbosity.
-formatMap = {
+sFormatMap = {
 			LogLevel.Verbose : colorama.Fore.CYAN,
 			LogLevel.Info : colorama.Fore.WHITE,
 			LogLevel.Warning : colorama.Fore.YELLOW,
 			LogLevel.Error : colorama.Fore.RED
 			}
+
 '''
 Prints log info to standard output.
 '''
@@ -33,7 +34,7 @@ class MyClass(OutputBase):
 		
 	def printMessage(self, message):
 		#Color depends on severity.
-		textColor = formatMap[message.logLevel]
+		textColor = sFormatMap[message.logLevel]
 		#Print the message and then print a newline.
 		print textColor + message.message + "\n"
 	

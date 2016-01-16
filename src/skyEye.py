@@ -1,26 +1,46 @@
-def startup():
-	#Open the log file!
-	
-	#Open DB connection.
-	#Make sure all the tables we need are actually there;
-	#If not, generate defaults.
-	
-	#Establish connection to outputs (Discord, etc.)
-	
-	#Establish connection to inputs (HTTP API, etc.)
-	#Report that we're open.
-	
-def shutdown():
-	#Close any resources.
+import sys
+from Output import log
+from Constants import stringConstants
+
+class SkyEyeDaemon(object):
+	mLog = log.getLogInstance()
+
+	def __init__(self):
+		self.mLog = log.getLogInstance()	
+
+	def startup(self, logPath=None):
+		#Open the log file!
+		if logPath is not None:
+			self.mLog.setLogFile(stringConstants.kDefaultOutPath)
+		
+		#Open DB connection.
+		#Make sure all the tables we need are actually there;
+		#If not, ask if you want to generate defaults.
+		
+		
+		#Establish connection to outputs (Discord, etc.)
+		
+		#Establish connection to inputs (HTTP API, etc.)
+		#Report that we're open.
+		
+	def shutdown(self):
+		#Close any resources.
+		self.mLog.shutdown()
 
 def main():
+	skyEye = SkyEyeDaemon()
+	
 	#Do startup.
-	startup()
+	try:
+		skyEye.startup()
+	except:
+		print "main(): Initialization failed with error \"{0}\", aborting!" % sys.exc_info()[0]
+		return
 	
 	#Now start listening for events.
 	
 	#Do shutdown.
-	shutdown()
+	skyEye.shutdown()
 
 #This is the entry point for the application.
 if __name__ == "__main__":

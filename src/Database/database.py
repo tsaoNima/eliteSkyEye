@@ -1,6 +1,7 @@
 import psycopg2
 from Output import log
 from Output.structs import LogLevel
+from Database import constants
 
 '''
 Created on Jan 15, 2016
@@ -19,7 +20,7 @@ classdocs
 class Database(object):
 	#PostgreSQL connection.
 	connection = None
-	#The cursor, the thing that you perfrorm database operations on.
+	#The cursor, the thing that you perform database operations on.
 	cursor = None
 	
 	'''
@@ -45,7 +46,7 @@ class Database(object):
 			self.cursor = self.connection.cursor();
 		except psycopg2.Error as e:
 			#Something bad happened.
-			sLog.log("Database.connect(): Connection failed with error: {0}" % e.diag.message_primary, LogLevel.Error, log.kTagAll)
+			sLog.log(constants.kFmtErrConnectionFailed % e.diag.message_primary, LogLevel.Error)
 			self.connection = None
 			self.cursor = None
 			return
@@ -56,3 +57,30 @@ class Database(object):
 	def close(self):
 		self.cursor.close()
 		self.connection.close()
+		
+	'''
+	Describes a given table.
+	'''
+	def describeTable(self, tableName):
+		#Sanity check.
+		if not tableName:
+			sLog.log(constants.kFmtErrDescribeTableBadTableName, LogLevel.Warning)
+			return
+		
+		#Otherwise, do our query!
+		try:
+			self.cursor.execute(constants.kFmtQueryDescribeTable,
+						tableName)
+		except psycopg2.Error as e:
+			sLog.log(constants.kFmtErrDescribeTableFailed % e.diag.message_primary, LogLevel.Error)
+			#Rollback is implicit; quit now.
+			return ()
+			
+		return self.cursor.fetchall()
+	
+	'''
+	Tries to execute the requested query.
+	No specific security checks; make sure the database user's permissions are setup properly!!!
+	'''
+	def execute(self, query):
+		#Sanity check.
