@@ -13,6 +13,16 @@ from Constants import stringConstants
 Used to test/setup all tables in SkyEye.
 '''
 
+def doSetupTables():
+	mLog = log.getLogInstance()
+	#Check each subsystem.
+	verifyResults = verifyTables.verifyAll()
+	for result in verifyResults:
+		#Did this module fail?
+		if not result[1]:
+			#If so, ask user if they want to init the module to defaults.
+			pass
+			
 class SetupTables(object):
 	mLog = log.getLogInstance()
 	stdOut = None
@@ -24,13 +34,7 @@ class SetupTables(object):
 		self.mLog.subscribe(self.stdOut)
 		
 	def run(self):
-		#Check each subsystem.
-		verifyResults = verifyTables.verifyAll()
-		for result in verifyResults:
-			#Did this module fail?
-			if not result[1]:
-				#If so, ask user if they want to init the module to defaults.
-				pass
+		doSetupTables()
 		
 	def shutdown(self):
 		self.mLog.shutdown()
