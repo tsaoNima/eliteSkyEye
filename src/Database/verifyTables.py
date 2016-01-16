@@ -29,6 +29,9 @@ class VerifyResults(object):
 		if not testResult:
 			self.mNumFailed += 1
 		return True
+	
+	def testResults(self):
+		return self.mTestResults
 
 def runTests(tests, results):
 	for test in tests:
@@ -76,9 +79,9 @@ def verifyRDA():
 '''
 Verifies all data modules.
 Returns:
-	* An array:
+	* A tuple:
 		* First element is the number of modules that failed.
-		* All subsequent elements are lists, containing the following:
+		* Second element is a list of pairs, containing the following:
 			* The name of the module.
 			* Another list. True if the module schema passed verification, False otherwise.
 '''
@@ -96,10 +99,10 @@ def verifyAll():
 	#Also note if everything passed!
 	if failCount == 0:
 		sLog.log(constants.kVerificationAllPassed, LogLevel.Info)
-		
+	
 	#Now push test results into the result object.
 	verifyResults = []
 	for verifyTest in verifyList:
 		verifyResults.append((verifyList[0], verifyList[2][0]))
 	
-	return verifyResults
+	return (failCount, verifyResults)

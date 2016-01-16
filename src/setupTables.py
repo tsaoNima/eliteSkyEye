@@ -17,11 +17,22 @@ def doSetupTables():
 	mLog = log.getLogInstance()
 	#Check each subsystem.
 	verifyResults = verifyTables.verifyAll()
-	for result in verifyResults:
-		#Did this module fail?
-		if not result[1]:
-			#If so, ask user if they want to init the module to defaults.
-			pass
+	#Did any modules fail?
+	if verifyResults[0] > 0:
+		#If so, ask the user if they want to init failed modules to defaults.
+		#(default to yes in batch mode)
+		#TODO
+		shouldReset = False
+		#If they do want a reset...
+		if shouldReset:
+			#For each module:
+			for module in verifyResults[1]:
+			#Is this module invalid?
+				if not module[1]:
+					#Backup current module DB.
+					pass
+					#Reset the DB's schema.
+					pass
 			
 class SetupTables(object):
 	mLog = log.getLogInstance()
