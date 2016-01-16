@@ -1,4 +1,10 @@
+'''
+Created on Jan 15, 2016
+
+@author: Me
+'''
 from enum import Enum
+from collections import namedtuple
 
 #Verbosity levels.
 #Levels are for the following:
@@ -13,3 +19,7 @@ from enum import Enum
 #Console: Info
 #Discord: Info
 LogLevel = Enum("Verbose", "Info", "Warning", "Error")
+
+#Describes one entry in the log buffer.
+#TODO: should add timestamp.
+LogElem = namedtuple("LogElem", "message logLevel tag")

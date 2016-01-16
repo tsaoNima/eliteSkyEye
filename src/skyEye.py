@@ -1,4 +1,6 @@
 def startup():
+	#Open the log file!
+	
 	#Open DB connection.
 	#Make sure all the tables we need are actually there;
 	#If not, generate defaults.
