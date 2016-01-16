@@ -30,6 +30,13 @@ def verifyRDA():
 	# * Events
 	return False
 
+'''
+Verifies all data modules.
+Returns:
+	* An array of tuples. Each tuple contains the following:
+		* The name of the module.
+		* True if the module schema passed verification, False otherwise.
+'''
 def verifyAll():
 	verifyList = (["GDW", verifyGDW, False], ["RDA", verifyRDA, False])
 	failCount = 0
@@ -44,3 +51,10 @@ def verifyAll():
 	#Also note if everything passed!
 	if failCount == 0:
 		sLog.log(constants.kVerificationAllPassed, LogLevel.Info)
+		
+	#Now push test results into the result object.
+	verifyResults = []
+	for verifyTest in verifyList:
+		verifyResults.append((verifyList[0], verifyList[2]))
+	
+	return verifyResults

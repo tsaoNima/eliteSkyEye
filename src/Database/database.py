@@ -77,10 +77,3 @@ class Database(object):
 			return ()
 			
 		return self.cursor.fetchall()
-	
-	'''
-	Tries to execute the requested query.
-	No specific security checks; make sure the database user's permissions are setup properly!!!
-	'''
-	def execute(self, query):
-		#Sanity check.

@@ -57,12 +57,14 @@ class Log(object):
 	
 	'''
 	Connects the given output module to the log buffer.
+	Raises:
+		* TypeError if [subscriber] is not a subclass of OutputBase.
 	'''
 	def subscribe(self, subscriber):
 		#Make sure the subscriber actually is an output module.
 		if not issubclass(subscriber.__class__, OutputBase):
-			print constants.kFmtLogSubscribeFailed % subscriber
-			return
+			failStr = constants.kFmtLogSubscribeFailed % subscriber
+			raise TypeError(failStr)
 		#Otherwise, add it to the subscriber list.
 		self.subscribers.append(subscriber)
 	
@@ -75,8 +77,10 @@ class Log(object):
 		#For each subscriber:
 		for subscriber in self.subscribers:
 			#Does this subscriber have a high enough verbosity?
+			levelMatches = subscriber.logLevel() >= msg.logLevel
 			#Does this subscriber care about this kind of message?
-			if subscriber.logLevel() >= msg.logLevel and msg.tag in subscriber.tags():
+			tagMatches = (msg.tag == constants.kTagAll or msg.tag in subscriber.tags())
+			if levelMatches and tagMatches:
 				#If both are true, print the line to the subscriber.
 				subscriber.printMessage(msg);
 	
