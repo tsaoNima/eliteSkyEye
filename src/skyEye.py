@@ -23,6 +23,9 @@ class SkyEyeDaemon(object):
 		#Establish connection to inputs (HTTP API, etc.)
 		#Report that we're open.
 		
+	def run(self):
+		pass
+		
 	def shutdown(self):
 		#Close any resources.
 		self.mLog.shutdown()
@@ -34,10 +37,12 @@ def main():
 	try:
 		skyEye.startup()
 	except:
-		print "main(): Initialization failed with error \"{0}\", aborting!" % sys.exc_info()[0]
+		print stringConstants.kErrSkyEyeInitFailed
+		print stringConstants.kFmtReason % sys.exc_info()[0]
 		return
 	
 	#Now start listening for events.
+	skyEye.run()
 	
 	#Do shutdown.
 	skyEye.shutdown()
