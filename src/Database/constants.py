@@ -10,6 +10,9 @@ kFmtErrDescribeTableBadTableName = "Database.describeTable(): invalid table name
 kFmtErrDescribeTableFailed = "Database.describeTable(): Table description failed with error: {0}"
 kFmtWarnVerificationFailed = "Database.verifyAll(): {0} failed verification!"
 kVerificationAllPassed = "Database.verifyAll(): All modules passed verification."
+kFmtWarnSchemaFailed = "{0}: Schema {1} failed verification!"
+kMethodVerifyGDW = "Database.verifyGDW()"
+kMethodVerifyRDA = "Database.verifyRDA()"
 
 #Queries...
 #Describes the requested table.
