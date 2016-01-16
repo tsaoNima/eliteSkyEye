@@ -49,3 +49,10 @@ class Database(object):
 			self.connection = None
 			self.cursor = None
 			return
+		
+	'''
+	Closes database connection.
+	'''
+	def close(self):
+		self.cursor.close()
+		self.connection.close()

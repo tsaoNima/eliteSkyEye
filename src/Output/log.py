@@ -20,6 +20,9 @@ class Log(object):
 	#The file to write the log out to, if any.
 	outFile = None
 	
+	'''
+	Writes all entries in the buffer to the log file.
+	'''
 	def flushBuffer(self):
 		#Do we have an output file?
 		if self.outFile is not None:
@@ -41,16 +44,14 @@ class Log(object):
 		
 		self.subscribers = []
 		if outPath is not None:
-			#Open the output file.
-			try:
-				self.outFile = open(outPath, 'w')
-			except:
-				print "Log.__init__(): Couldn't open \"{0}\"!" % outPath
-				print "Reason: {0}" % sys.exc_info()[0]
-				self.outFile = None
+			self.setLogFile(outPath)
 		else:
 			print "Log.__init__(): No log file specified, buffer will not be saved!"
 	
+	'''
+	Closes all resources the log system may have been using.
+	Should only be called at application shutdown.
+	'''
 	def shutdown(self):
 		if self.outFile is not None:
 			#Close the output file.
@@ -97,16 +98,51 @@ class Log(object):
 		
 		#Broadcast the new line to all subscribers.
 		self.broadcast(newMsg)
-
+	
+	'''
+	Gets the currently opened log file, if any.
+	'''
+	def logFile(self):
+		if self.outFile is not None:
+			return self.outFile.name
+		else:
+			return "(none)"
+	
+	'''
+	Closes any currently open log file and uses the specified path as the new log file.
+	If outPath is None or an empty string, does nothing.
+	'''
+	def setLogFile(self, outPath):
+		newOutFile = None
+		#Is the path valid?
+		if outPath is not None or outPath != "":
+			#Try to open the requested path; rollback if the open failed.
+			print "setLogFile(): Opening log file {0}" % outPath
+			try:
+				newOutFile = open(outPath, 'a+')
+			except:
+				print "setLogFile(): Couldn't open \"{0}\", aborting!" % outPath
+				print "Reason: {0}" % sys.exc_info()[0]
+				return
+		#Otherwise early out.
+		else:
+			print "setLogFile(): No log file specified, buffer will not be saved!"
+			return
+				
+		#Close any log file we may have been using.
+		if self.outFile is not None:
+			print "setLogFile(): Closing log file {0}" % self.outFile.name
+			self.outFile.close()
+		
+		#Now set the new output as our buffer's file.
+		self.outFile = newOutFile
+		print "setLogFile(): Switched to log file {0}" % newOutFile
+		
 '''
 Gets an instance of Log representing the program's log buffer.
 '''		
 def getLogInstance():
 	if sLogInstance is None:
-		print "getLogInstance(): No log instance set up; did you call initLogInstance()?"
-		assert False
+		sLogInstance = Log()
 	return sLogInstance
-
-def initLogInstance(outPath=None):
-	sLogInstance = Log(outPath)
 	
