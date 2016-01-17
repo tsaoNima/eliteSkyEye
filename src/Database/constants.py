@@ -4,6 +4,8 @@ Created on Jan 16, 2016
 @author: Me
 '''
 
+kSchemaNameLenMax = 255
+
 #Log strings...
 kFmtErrConnectionFailed = "Database.connect(): Connection failed with error: {0}"
 kFmtErrDescribeTableBadTableName = "Database.describeTable(): invalid table name passed, aborting"

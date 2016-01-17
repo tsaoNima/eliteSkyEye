@@ -1,4 +1,5 @@
 import sys
+from Output.structs import LogLevel
 from Output import log
 from Constants import stringConstants
 import setupTables
@@ -7,10 +8,14 @@ class SkyEyeDaemon(object):
 	mLog = log.getLogInstance()
 
 	def __init__(self, logPath=None):
-		self.mLog = log.getLogInstance()	
+		self.mLog = log.getLogInstance()
 		#Open the log file!
-		if logPath is not None:
-			self.mLog.setLogFile(stringConstants.kDefaultOutPath)
+		if logPath is None:
+			logPath = stringConstants.kSkyEyeDefaultOutPath
+		try:
+			self.mLog.setLogFile(logPath)
+		except:
+			self.mLog.log(stringConstants.kFmtErrSkyEyeLogOpenFailed % logPath, LogLevel.Error)
 		
 		#Open DB connection.
 		pass
@@ -35,7 +40,7 @@ class SkyEyeDaemon(object):
 
 def main():
 	skyEye = None
-	outPath = stringConstants.kDefaultOutPath
+	outPath = stringConstants.kSkyEyeDefaultOutPath
 	
 	#Do startup.
 	try:
