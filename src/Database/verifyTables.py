@@ -3,11 +3,11 @@ Created on Jan 15, 2016
 
 @author: Me
 '''
+import schemas
 import schemaTests
 from Output import log
 from Output.structs import LogLevel
 from Database import constants
-from Database.constants import kMethodVerifyGDW
 
 sLog = log.getLogInstance()
 
@@ -33,31 +33,21 @@ class VerifyResults(object):
 	def testResults(self):
 		return self.mTestResults
 
-def runTests(tests, results):
-	for test in tests:
-		passed = test[1]()
-		results.addResult(test[0], passed)
+def runTests(database, module, results):
+	for schema in vars(module):
+		passed = schemaTests.verifySchema(database, schema)
+		results.addResult(schema.name, passed)
 		#Notify log that a schema didn't verify.
 		if not passed:
-			sLog.log(constants.kFmtWarnSchemaFailed % (kMethodVerifyGDW, test[0]), LogLevel.Verbose)
+			sLog.log(constants.kFmtWarnSchemaFailed % (constants.kMethodVerifyGDW, schema.name), LogLevel.Verbose)
 			
 def verifyGDW():
 	#Try to connect to the GDW.
 	#Make sure the GDW has the following tables and that their schemas match as expected.
-	testList = (("Government Type (Dimension)", schemaTests.gdwVerifyGovernmentType),
-				("Economy Type (Dimension)", schemaTests.gdwVerifyEconomyType),
-				("Faction (Dimension)", schemaTests.gdwVerifyFaction),
-				("System (Dimension)", schemaTests.gdwVerifySystem),
-				("System Celestial Structure (Dimension)", schemaTests.gdwVerifySystemCelestialStructure),
-				("Structure (Dimension)", schemaTests.gdwVerifyStructure),
-				("CZ Intensity (Dimension)", schemaTests.gdwVerifyCZIntensity),
-				("War (Fact)", schemaTests.gdwVerifyWar),
-				("Conflict Zone (Fact)", schemaTests.gdwVerifyConflictZone),
-				("Faction in System (Fact)", schemaTests.gdwVerifyFactionInSystem))
 	resultList = VerifyResults()
 	
 	#Run tests and build the result list.
-	runTests(testList, resultList)
+	runTests(database, schemas.GDWSchemas(), resultList)
 	
 	return resultList
 	
@@ -67,12 +57,10 @@ def verifyRDA():
 	#TODO: Following tables are optional:
 	# * Player Alias Types (low priority)
 	# * Player Aliases (low priority)
-	testList = (("Events", schemaTests.rdaVerifyEvents),
-				("Player Info", schemaTests.rdaVerifyPlayerInfo))
 	resultList = VerifyResults()
 	
 	#Run tests and build the result list.
-	runTests(testList, resultList)
+	runTests(database, schemas.RDASchemas(), resultList)
 	
 	return resultList
 

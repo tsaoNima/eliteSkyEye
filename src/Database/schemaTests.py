@@ -6,38 +6,14 @@ Created on Jan 16, 2016
 
 #All tests must return True iff the schema matches exactly, false otherwise.
 
-def gdwVerifyGovernmentType():
-	pass
-
-def gdwVerifyEconomyType():
-	pass
-
-def gdwVerifyFaction():
-	pass
-
-def gdwVerifySystem():
-	pass
-
-def gdwVerifySystemCelestialStructure():
-	pass
-
-def gdwVerifyStructure():
-	pass
-
-def gdwVerifyCZIntensity():
-	pass
-
-def gdwVerifyWar():
-	pass
-
-def gdwVerifyConflictZone():
-	pass
-
-def gdwVerifyFactionInSystem():
-	pass
-
-def rdaVerifyEvents():
-	pass
-
-def rdaVerifyPlayerInfo():
+def verifySchema(database, schema):
+	#Make sure the table exists on the database.
+	#If it does, iterate over columns:
+	#	Does the column name match?
+	#	Does the column type match?
+	#	Does the precision match, if precision was specified?
+	#	If the column is NOT NULL in the schema, is it NOT NULL in the table?
+	#Next, iterate over constraints (primary, foreign, unique):
+	#	Does each column's contraint match?
+	#	If constraint is a foreign key, is it to the right table?
 	pass
