@@ -7,6 +7,7 @@ import constants
 from listenerBase import ListenerBase
 from structs import LogLevel
 import colorama
+from colorama.ansi import Style
 
 #Specifies what color a line should be based on its verbosity.
 sFormatMap = {
@@ -36,9 +37,9 @@ class ConsoleListener(ListenerBase):
 		
 	def printMessage(self, message):
 		#Color depends on severity.
-		textColor = sFormatMap[message.logLevel]
+		textColor = sFormatMap[message.logLevel] + Style.BRIGHT
 		#Print the message and then print a newline.
-		print textColor + constants.kStdOutLine.format(message.dateTime, message.tag, message.message) + colorama.Fore.RESET
+		print textColor + constants.kStdOutLine.format(message.dateTime, message.tag, message.message) + Style.RESET_ALL
 	
 	def logLevel(self):
 		return self.mLogLevel
