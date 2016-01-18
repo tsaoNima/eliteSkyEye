@@ -25,9 +25,8 @@ class ConsoleListener(ListenerBase):
 	mLogLevel = LogLevel.Info
 	mTags = []
 	
-	def __init__(self, pLogLevel=LogLevel.Info, pTags=[""]):
-		self.mLogLevel = pLogLevel
-		self.mTags = pTags
+	def __init__(self, pLogLevel=LogLevel.Info, pTags=[]):
+		super(ConsoleListener, self).__init__()
 		#Start Colorama.
 		colorama.init()
 		
@@ -40,20 +39,3 @@ class ConsoleListener(ListenerBase):
 		textColor = sFormatMap[message.logLevel] + Style.BRIGHT
 		#Print the message and then print a newline.
 		print textColor + constants.kStdOutLine.format(message.dateTime, message.tag, message.message) + Style.RESET_ALL
-	
-	def logLevel(self):
-		return self.mLogLevel
-	
-	def setLogLevel(self, pLogLevel):
-		self.mLogLevel = pLogLevel
-	
-	def tags(self):
-		return self.mTags
-	
-	def addTag(self, pTag):
-		if pTag not in self.mTags:
-			self.mTags.append(pTag)
-	
-	def removeTag(self, pTag):
-		if pTag in self.mTags:
-			self.mTags.remove(pTag)

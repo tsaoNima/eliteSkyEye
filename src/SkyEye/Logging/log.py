@@ -103,9 +103,9 @@ class Log(object):
 			#Does this subscriber have a high enough verbosity?
 			levelMatches = msg.logLevel >= subscriber.logLevel()
 			#Does this subscriber care about this kind of message?
-			tagMatches = (msg.tag == constants.kTagAll or 
-						not subscriber.tags() or
-						msg.tag in subscriber.tags())
+			isAllTagged = msg.tag == constants.kTagAll
+			isInTags = not subscriber.tags() or (subscriber.tags() and msg.tag in subscriber.tags())
+			tagMatches = (isAllTagged or isInTags)
 			if levelMatches and tagMatches:
 				#If both are true, print the line to the subscriber.
 				subscriber.printMessage(msg);
