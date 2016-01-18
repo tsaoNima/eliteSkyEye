@@ -1,9 +1,10 @@
 import sys
-from Output.outputBase import OutputBase
+from outputBase import OutputBase
 from structs import LogElem
 from structs import LogLevel
-from Output import constants
+import constants
 from datetime import datetime
+import pytz
 
 sLogInstance = None
 
@@ -16,6 +17,10 @@ class Log(object):
 	subscribers = None
 	#The file to write the log out to, if any.
 	outFile = None
+	
+	def getTimeStamp(self):
+		result = datetime.now(pytz.utc)
+		return result
 	
 	#Writes all entries in the buffer to the log file.
 	def flushBuffer(self):
@@ -39,11 +44,12 @@ class Log(object):
 		self.logBuffer = []
 		#Preallocate buffer space because I don't want to use append() later.
 		for i in xrange(constants.kLogBufferMaxLines):
-			emptyMsg = LogElem(datetime.utcnow(), "", LogLevel.Verbose, constants.kTagEmpty)
+			emptyMsg = LogElem(self.getTimeStamp(), "", LogLevel.Verbose, constants.kTagEmpty)
 			self.logBuffer.append(emptyMsg)
 		self.bufferHead = -1
 		
 		self.subscribers = []
+		self.debugLog(constants.kLogInitComplete)
 		self.setLogFile(outPath)
 	
 	'''
@@ -51,7 +57,7 @@ class Log(object):
 	Should only be called at application shutdown.
 	'''
 	def shutdown(self):
-		print constants.kLogInShutdown
+		self.debugLog(constants.kLogInShutdown)
 		#Flush the current buffer.
 		self.flushBuffer()
 		
@@ -105,7 +111,7 @@ class Log(object):
 			#If not, flush it first.
 			self.flushBuffer()
 		#Now add the line to the buffer.
-		newMsg = LogElem(datetime.utcnow(), message, level, tag)
+		newMsg = LogElem(self.getTimeStamp(), message, level, tag)
 		self.bufferHead += 1
 		self.logBuffer[self.bufferHead] = newMsg
 		

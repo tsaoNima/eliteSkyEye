@@ -29,3 +29,6 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 ~$*.docx
 *.pyc
+src/dist/*
+src/*.egg-info
+src/MANIFEST

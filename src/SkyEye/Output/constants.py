@@ -35,6 +35,7 @@ kStdOutLine = "[{0}] ({1}): {2}"
 
 #Stdout constants.
 kStrNone = "(none)"
+kLogInitComplete = "Log.__init__(): Logger ready, opening log file"
 kLogInShutdown = "Log.shutdown(): Logger is going down NOW"
 kFmtLogSubscribeFailed = "Log.subscribe(): Can't attach subscriber {0}, subscriber doesn't derive from OutputBase!"
 kFmtLogOpeningLogFile = "setLogFile(): Opening log file {0}"
