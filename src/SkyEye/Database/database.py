@@ -31,10 +31,12 @@ class Database(object):
 			self.cursor.execute(query,
 						queryParams)
 		except psycopg2.Error as e:
-			sLog.log(failMsg.format(failMsgParams + e.diag.message_primary), LogLevel.Error)
-			#Rollback is implicit; quit now.
+			allParams = failMsgParams + (e,)
+			sLog.log(failMsg.format(*allParams), LogLevel.Error)
+			self.connection.rollback()
 			return False
-		return True 
+		self.connection.commit()
+		return True
 	
 	def executeOnTable(self, tableName, invalidTableMsg, query, queryParams, failMsg, failMsgParams = ()):
 		#Sanity check.
@@ -44,14 +46,52 @@ class Database(object):
 		
 		return self.execute(query, queryParams, failMsg, failMsgParams)
 	
+	def buildConstraintString(self, constraint):
+		result = ""
+		#Is this constraint a string?
+		if isinstance(constraint, basestring):
+			#If it is, return without expanding.
+			result = constraint
+		else:
+			#Otherwise, use subsequent elements as parameters.
+			pass
+		return result
+	
+	def buildSingleColumn(self, column):
+		#Does this have precision?
+		precisionStr = ""
+		if len(column) > constants.kSchemaColumnMinElems:
+			precisionStr = constants.kFmtColumnPrecision.format(column[constants.kSchemaColumnPrecisionIdx])
+		#Does this have constraints?
+		constraints = column[constants.kSchemaColumnConstraintIdx]
+		constraintStr = ""
+		#Build the constraint string, space separating each constraint.
+		if len(constraints) > 0:
+			constraintStr = self.buildConstraintString(constraints[0])
+			for c in constraints[1:]:
+				constraintStr += constants.kConstraintSeparator + self.buildConstraintString(c)
+			#Convert that into the final constraint string.
+			constraintStr = constants.kFmtColumnConstraints.format(constraintStr)
+		#Now build our column.
+		return constants.kFmtCreateColumn.format(column[constants.kSchemaColumnNameIdx],
+													column[constants.kSchemaColumnTypeIdx],
+													precisionStr,
+													constraintStr)
+	
 	#Builds a column string based on the given schema.
 	#Returns the column string.
 	def buildColumnString(self, schema):
+		if not schema:
+			return ""
 		#Generally a column goes:
 		#"[name] [type]([precision]),"
 		#Constrained columns have the format:
 		#"[name] [type]([precision]) [constraints],"
-		pass
+		#Build the first column.
+		result = self.buildSingleColumn(schema[0])
+		for column in schema[1:]:
+			result += constants.kCreateColumnSeparator + self.buildSingleColumn(column)
+		return result
 	
 	#Throws away all current database references.
 	def abort(self):
@@ -80,17 +120,18 @@ class Database(object):
 			#We probably want an autocommit connection, no point being explicit.
 			#Host is localhost and port is going to be 5432.
 			self.connection = psycopg2.connect(database=pDatabase, user=pUser, password=pPassword)
-			self.connection.autocommit = True
+			#self.connection.autocommit = True
 			#Now get a cursor to start operations.
 			self.cursor = self.connection.cursor();
 			self.connected = True
 			sLog.log(constants.kFmtConnectionSucceeded.format(constants.kMethodConnect, pDatabase, port, pUser),
 					LogLevel.Debug)
+			return True
 		except psycopg2.Error as e:
 			#Something bad happened.
-			sLog.log(constants.kFmtErrConnectionFailed.format(constants.kMethodConnect, e.diag.message_primary), LogLevel.Error)
+			sLog.log(constants.kFmtErrConnectionFailed.format(constants.kMethodConnect, e), LogLevel.Error)
 			self.close()
-			return
+			return False
 		
 	'''
 	Closes database connection.
@@ -113,7 +154,7 @@ class Database(object):
 							(tableName,),
 							constants.kFmtErrTableExistsFailed,
 							(constants.kMethodTableExists,)):
-			return self.cursor.fetchone()
+			return self.cursor.fetchone()[0]
 		return False
 	
 	'''
@@ -135,10 +176,11 @@ class Database(object):
 	Returns True if the table was dropped, False otherwise.
 	'''
 	def dropTable(self, tableName):
+		queryStr = constants.kQueryDropTable.format(tableName)
 		return self.executeOnTable(tableName,
 							constants.kFmtErrBadTableName.format(constants.kMethodDropTable),
-							constants.kQueryDropTable,
-							(tableName,),
+							queryStr,
+							(),
 							constants.kFmtErrDropTableFailed,
 							(constants.kMethodDropTable,))
 		
@@ -146,18 +188,19 @@ class Database(object):
 	Attempts to create the requested table with the given schema.
 	Returns True if the table was created, False otherwise.
 	'''
-	def createTable(self, tableName, schema):
+	def createTable(self, schema):
 		#Sanity check.
-		if not tableName:
+		if not schema.schemaName:
 			sLog.log(constants.kFmtErrBadTableName.format(constants.kMethodCreateTable), LogLevel.Warning)
 			return
 		
 		#Build the CREATE TABLE string.
-		columns = self.buildColumnString(schema)
+		columns = self.buildColumnString(schema.schemaColumns)
 		
 		#Do our query!
-		createString = constants.kFmtQueryCreateTable.format(columns)
+		createString = constants.kFmtQueryCreateTable.format(schema.schemaName, columns)
+		sLog.logVerbose("Database.createTable(): Create string: \"{0}\"".format(createString))
 		return self.execute(createString,
-					(tableName,),
+					(),
 					constants.kFmtErrCreateTableFailed,
 					(constants.kMethodCreateTable,))

@@ -3,13 +3,21 @@ Created on Jan 18, 2016
 
 @author: Me
 '''
-from ..Logging import log
 import database
+import constants
+from ..Logging import log
+from ..Logging.structs import LogLevel
+from ..Logging import consoleListener
 from schemas import Types
 from schemas import Modifiers
-import constants
+from schemas import Schema
 
 def testAll(pLog):
+	pLog.logDebug("Please make sure that the server has the following:\n"
+				"\tDatabase: testDB\n"
+				"\tUsername: testUser\n"
+				"\tPassword: testPassword\n")
+	
 	#Try connecting to a database.
 	pLog.logDebug("Attempting connection to server...")
 	dbConnection = database.Database()
@@ -18,14 +26,14 @@ def testAll(pLog):
 		return
 	
 	#Test creating a table.
-	testTableName = "testTable"
+	testTableName = "TestTable"
 	pLog.logDebug("Testing createTable()...")
-	testSchema = (
-					("id", Types.int, (Modifiers.primaryKey)),
-					("varCharColumn", Types.varchar, (Modifiers.notNull), constants.kSchemaNameLenMax),
-					("boolColumn", Types.bool, ())
-					)
-	if not dbConnection.createTable(testTableName, testSchema):
+	testSchema = Schema(testTableName, (
+					("Id", Types.int, (Modifiers.primaryKey,)),
+					("VarCharColumn", Types.varchar, (Modifiers.notNull,), constants.kSchemaNameLenMax),
+					("BoolColumn", Types.bool, ())
+					))
+	if not dbConnection.createTable(testSchema):
 		pLog.logError("Table creation failed, aborting!")
 		return
 	
@@ -59,5 +67,8 @@ def testAll(pLog):
 	
 if __name__ == "__main__":
 	mLog = log.getLogInstance()
+	listener = consoleListener.ConsoleListener()
+	listener.setLogLevel(LogLevel.Verbose)
+	mLog.attach(listener)
 	testAll(mLog)
 	mLog.shutdown()

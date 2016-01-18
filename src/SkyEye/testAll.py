@@ -18,10 +18,6 @@ def main():
 	mLog.attach(stdOut)
 	
 	mLog.logDebug("Testing database...")
-	mLog.logDebug("Please make sure that the server has the following:\n"
-				"\tDatabase: testDB\n"
-				"\tUsername: testUser\n"
-				"\tPassword: testPassword\n")
 	Database.tests.testAll(mLog)
 	
 	#Shutdown the logger.

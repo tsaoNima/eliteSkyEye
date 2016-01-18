@@ -36,14 +36,36 @@ kFmtWarnSchemaFailed = "{0}: Schema {1} failed verification!"
 
 #Queries...
 #Describes the requested table.
-kQueryDescribeTable = "select column_name, data_type, character_maximum_length, is_nullable "
-"from INFORMATION_SCHEMA.COLUMNS where table_name = %s;"
-kQueryCheckTableExists = "if exists (select * from information_schema.tables where table_name = %s) "
-"select TRUE as result else select FALSE as result"
+#0: Table name.
+kQueryDescribeTable = ("select column_name, data_type, character_maximum_length, is_nullable "  
+"from information_schema.columns where table_name = %s;")
+#Returns true if the requested table exists, false otherwise.
+#Note that this doesn't check the current schema!
+#0: Table name.
+kQueryCheckTableExists = ("select exists (select * from information_schema.tables "
+						"where table_name = %s);")
 #Drops the requested table.
-kQueryDropTable = "drop table %s;"
+#0: Table name.
+kQueryDropTable = "drop table \"{0}\";"
 #Creates the requested table.
-#Column info should be prebuilt and filled in with the formatter.
-kFmtQueryCreateTable = "create table %s ({0});"
-kFmtCreateWithPrecision = "{0}({1})"
-kCreateColumnSeparator = ","
+#0: Table name.
+#1: Column info. Should be prebuilt and filled in with the formatter.
+kFmtQueryCreateTable = "create table \"{0}\" ({1});"
+#0: Column name.
+#1: Column type.
+#2: Column precision, if any.
+#3: Column constraints, if any.
+kFmtCreateColumn = "{0} {1}{2}{3}"
+kSchemaColumnMinElems = 3
+kSchemaColumnNameIdx = 0
+kSchemaColumnTypeIdx = 1
+kSchemaColumnConstraintIdx = 2
+kSchemaColumnPrecisionIdx = 3
+#0: The column's precision. If there is no precision,
+#use an empty string instead of this constant.
+kFmtColumnPrecision = "({0})"
+#0: The column's constraints. If there are no constraints,
+#use an empty string instead of this constant.
+kFmtColumnConstraints = " {0}"
+kConstraintSeparator = " "
+kCreateColumnSeparator = ", "
