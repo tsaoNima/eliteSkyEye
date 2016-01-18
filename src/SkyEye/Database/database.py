@@ -4,8 +4,8 @@ Created on Jan 15, 2016
 @author: Me
 '''
 import psycopg2
-from ..Output import log
-from ..Output.structs import LogLevel
+from ..Logging import log
+from ..Logging.structs import LogLevel
 import constants
 from ..Constants import stringConstants
 

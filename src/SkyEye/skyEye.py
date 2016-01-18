@@ -1,6 +1,6 @@
 import sys
-from Output.structs import LogLevel
-from Output import log
+from Logging.structs import LogLevel
+from Logging import log
 from Constants import stringConstants
 import setupTables
 

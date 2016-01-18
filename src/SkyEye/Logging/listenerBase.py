@@ -5,9 +5,9 @@ Created on Jan 15, 2016
 '''
 
 '''
-Abstract class for objects that print output from SkyEye.
+Abstract class for objects that print output from the logger.
 '''
-class OutputBase(object):
+class ListenerBase(object):
 	def printMessage(self, message):
 		raise NotImplementedError("Output modules must implement printMessage()!")
 	

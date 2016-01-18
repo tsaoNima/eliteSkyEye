@@ -4,13 +4,13 @@ Created on Jan 15, 2016
 @author: Me
 '''
 import sys
-from Output import log
-from Output import standardOutput
+from Logging import log
+from Logging import consoleListener
 from Database import verifyTables
 from Constants import stringConstants
 
 '''
-Used to test/setup all tables in SkyEye.
+Used to test/setup all tables in 
 '''
 
 def doSetupTables():
@@ -41,7 +41,7 @@ class SetupTables(object):
 	def __init__(self, outPath=stringConstants.kSetupTablesDefaultOutPath):
 		self.mLog.setLogFile(outPath)
 		#Attach a default stdout listener.
-		self.stdOut = standardOutput.ConsoleListener()
+		self.stdOut = consoleListener.ConsoleListener()
 		self.mLog.subscribe(self.stdOut)
 		
 	def run(self):

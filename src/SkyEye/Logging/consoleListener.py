@@ -4,7 +4,7 @@ Created on Jan 15, 2016
 @author: Me
 '''
 import constants
-from outputBase import OutputBase
+from listenerBase import ListenerBase
 from structs import LogLevel
 import colorama
 
@@ -20,7 +20,7 @@ sFormatMap = {
 '''
 Prints log info to standard output.
 '''
-class ConsoleListener(OutputBase):
+class ConsoleListener(ListenerBase):
 	mLogLevel = LogLevel.Info
 	mTags = []
 	

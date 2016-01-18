@@ -5,8 +5,8 @@ Created on Jan 15, 2016
 '''
 import schemas
 import schemaTests
-from ..Output import log
-from ..Output.structs import LogLevel
+from ..Logging import log
+from ..Logging.structs import LogLevel
 from ..Database import constants
 
 sLog = log.getLogInstance()

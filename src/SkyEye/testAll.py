@@ -3,7 +3,7 @@ Created on Jan 17, 2016
 
 @author: Me
 '''
-from Output import tests
+from Logging import tests
 
 def main():
 	print "Testing logger..."

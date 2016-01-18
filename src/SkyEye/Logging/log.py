@@ -1,5 +1,5 @@
 import sys
-from outputBase import OutputBase
+from listenerBase import ListenerBase
 from structs import LogElem
 from structs import LogLevel
 import constants
@@ -72,11 +72,11 @@ class Log(object):
 	'''
 	Connects the given output module to the log buffer.
 	Raises:
-		* TypeError if [subscriber] is not a subclass of OutputBase.
+		* TypeError if [subscriber] is not a subclass of ListenerBase.
 	'''
 	def subscribe(self, subscriber):
 		#Make sure the subscriber actually is an output module.
-		if not issubclass(subscriber.__class__, OutputBase):
+		if not issubclass(subscriber.__class__, ListenerBase):
 			failStr = constants.kFmtLogSubscribeFailed.format(subscriber)
 			raise TypeError(failStr)
 		#Otherwise, add it to the subscriber list.

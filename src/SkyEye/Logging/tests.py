@@ -4,7 +4,7 @@ Created on Jan 17, 2016
 @author: Me
 '''
 import log
-import standardOutput
+import consoleListener
 import constants
 from structs import LogLevel
 
@@ -14,7 +14,7 @@ def testAll():
 	mLog.setLogFile("./testLogging.log")
 	print "Got log instance."
 	#Attach stdout listener.
-	stdOut = standardOutput.ConsoleListener()
+	stdOut = consoleListener.ConsoleListener()
 	stdOut.setLogLevel(LogLevel.Verbose)
 	mLog.subscribe(stdOut)
 	print "Attached console listener."
