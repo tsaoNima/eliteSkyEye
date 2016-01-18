@@ -32,3 +32,4 @@ _ReSharper*/
 src/dist/*
 src/*.egg-info
 src/MANIFEST
+src/build/*
