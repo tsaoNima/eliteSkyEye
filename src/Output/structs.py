@@ -18,8 +18,13 @@ from collections import namedtuple
 #In general, expected levels are:
 #Console: Info
 #Discord: Info
-LogLevel = Enum("Verbose", "Info", "Warning", "Error")
+class LogLevel:
+	Verbose = 0
+	Debug = 1
+	Info = 2
+	Warning = 3
+	Error = 4
 
 #Describes one entry in the log buffer.
 #TODO: should add timestamp.
-LogElem = namedtuple("LogElem", "message logLevel tag")
+LogElem = namedtuple("LogElem", "dateTime message logLevel tag")

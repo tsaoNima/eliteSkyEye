@@ -57,7 +57,7 @@ def main():
 		mSetupTables = SetupTables()
 	except:
 		print stringConstants.kErrSetupTablesLogInitFailed
-		print stringConstants.kFmtReason % sys.exc_info()[0]
+		print stringConstants.kFmtReason.format(sys.exc_info()[0])
 		return
 	
 	mSetupTables.run()

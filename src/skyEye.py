@@ -15,7 +15,7 @@ class SkyEyeDaemon(object):
 		try:
 			self.mLog.setLogFile(logPath)
 		except:
-			self.mLog.log(stringConstants.kFmtErrSkyEyeLogOpenFailed % logPath, LogLevel.Error)
+			self.mLog.log(stringConstants.kFmtErrSkyEyeLogOpenFailed.format(logPath), LogLevel.Error)
 		
 		#Open DB connection.
 		pass
@@ -47,7 +47,7 @@ def main():
 		skyEye = SkyEyeDaemon(outPath)
 	except:
 		print stringConstants.kErrSkyEyeInitFailed
-		print stringConstants.kFmtReason % sys.exc_info()[0]
+		print stringConstants.kFmtReason.format(sys.exc_info()[0])
 		return
 	
 	#Now start listening for events.

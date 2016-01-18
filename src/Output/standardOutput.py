@@ -3,6 +3,7 @@ Created on Jan 15, 2016
 
 @author: Me
 '''
+import constants
 from outputBase import OutputBase
 from structs import LogLevel
 import colorama
@@ -10,6 +11,7 @@ import colorama
 #Specifies what color a line should be based on its verbosity.
 sFormatMap = {
 			LogLevel.Verbose : colorama.Fore.CYAN,
+			LogLevel.Debug : colorama.Fore.GREEN,
 			LogLevel.Info : colorama.Fore.WHITE,
 			LogLevel.Warning : colorama.Fore.YELLOW,
 			LogLevel.Error : colorama.Fore.RED
@@ -36,7 +38,7 @@ class ConsoleListener(OutputBase):
 		#Color depends on severity.
 		textColor = sFormatMap[message.logLevel]
 		#Print the message and then print a newline.
-		print textColor + message.message + "\n"
+		print textColor + constants.kStdOutLine.format(message.dateTime, message.tag, message.message) + colorama.Fore.RESET
 	
 	def logLevel(self):
 		return self.mLogLevel
