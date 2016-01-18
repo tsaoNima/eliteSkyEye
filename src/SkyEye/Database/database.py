@@ -69,6 +69,7 @@ class Database(object):
 	'''
 	Attempts to connect to the requested database
 	on this machine.
+	Returns True if the connection was successful, False otherwise.
 	'''
 	def connect(self, pDatabase, pUser, pPassword):
 		port = constants.kDefaultDatabasePort
@@ -117,6 +118,8 @@ class Database(object):
 	
 	'''
 	Describes a given table.
+	Returns the table's schema if successful,
+	or an empty tuple if the table could not be found for any reason.
 	'''
 	def describeTable(self, tableName):
 		if self.executeOnTable(tableName,
@@ -129,9 +132,10 @@ class Database(object):
 	
 	'''
 	Attempts to drop the requested table.
+	Returns True if the table was dropped, False otherwise.
 	'''
 	def dropTable(self, tableName):
-		self.executeOnTable(tableName,
+		return self.executeOnTable(tableName,
 							constants.kFmtErrBadTableName.format(constants.kMethodDropTable),
 							constants.kQueryDropTable,
 							(tableName,),
@@ -140,6 +144,7 @@ class Database(object):
 		
 	'''
 	Attempts to create the requested table with the given schema.
+	Returns True if the table was created, False otherwise.
 	'''
 	def createTable(self, tableName, schema):
 		#Sanity check.
@@ -152,7 +157,7 @@ class Database(object):
 		
 		#Do our query!
 		createString = constants.kFmtQueryCreateTable.format(columns)
-		self.execute(createString,
+		return self.execute(createString,
 					(tableName,),
 					constants.kFmtErrCreateTableFailed,
 					(constants.kMethodCreateTable,))

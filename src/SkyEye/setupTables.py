@@ -42,7 +42,7 @@ class SetupTables(object):
 		self.mLog.setLogFile(outPath)
 		#Attach a default stdout listener.
 		self.stdOut = consoleListener.ConsoleListener()
-		self.mLog.subscribe(self.stdOut)
+		self.mLog.attach(self.stdOut)
 		
 	def run(self):
 		doSetupTables()

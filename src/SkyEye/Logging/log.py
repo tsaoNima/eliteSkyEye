@@ -19,7 +19,7 @@ class Log(object):
 	outFile = None
 	
 	def getTimeStamp(self):
-		result = datetime.now(pytz.utc)
+		result = datetime.now(tz = pytz.utc)
 		return result
 	
 	#Writes all entries in the buffer to the log file.
@@ -62,25 +62,35 @@ class Log(object):
 		self.flushBuffer()
 		
 		#Unhook all subscribers.
-		for s in self.subscribers:
-			self.subscribers.remove(s)
+		self.detachAll()
 		
 		#Close the output file.
 		if self.outFile is not None:
 			self.outFile.close()
 	
 	'''
-	Connects the given output module to the log buffer.
+	Connects the given listener to the log buffer.
 	Raises:
 		* TypeError if [subscriber] is not a subclass of ListenerBase.
 	'''
-	def subscribe(self, subscriber):
+	def attach(self, subscriber):
 		#Make sure the subscriber actually is an output module.
 		if not issubclass(subscriber.__class__, ListenerBase):
 			failStr = constants.kFmtLogSubscribeFailed.format(subscriber)
 			raise TypeError(failStr)
 		#Otherwise, add it to the subscriber list.
 		self.subscribers.append(subscriber)
+	
+	'''
+	Disconnects the given listener from the log buffer.
+	'''
+	def detach(self, subscriber):
+		if subscriber in self.subscribers:
+			self.subscribers.remove(subscriber)
+	
+	def detachAll(self):
+		for s in self.subscribers:
+			self.subscribers.remove(s)
 	
 	'''
 	Broadcasts the current line to all subscribers.
