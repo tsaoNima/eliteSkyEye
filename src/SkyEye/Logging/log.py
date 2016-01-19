@@ -38,7 +38,26 @@ class Log(object):
 	#and also attempts to display it to listeners.
 	def debugLog(self, message):
 		print message
-		self.logDebug(message)
+		self.LogDebug(message)
+	
+	'''
+	Broadcasts the current line to all subscribers.
+	'''
+	def broadcast(self, msg):
+		assert self.bufferHead >= 0
+		
+		#For each subscriber:
+		for subscriber in self.subscribers:
+			#Does this subscriber have a high enough verbosity?
+			levelMatches = msg.logLevel >= subscriber.LogLevel()
+			#Does this subscriber care about this kind of message?
+			isAllTagged = msg.tag == constants.kTagAll
+			isInTags = not subscriber.Tags() or (subscriber.Tags() and msg.tag in subscriber.Tags())
+			tagMatches = (isAllTagged or isInTags)
+			if levelMatches and tagMatches:
+				#If both are true, print the line to the subscriber.
+				subscriber.PrintMessage(msg);
+	
 	
 	def __init__(self, outPath=None):
 		self.logBuffer = []
@@ -50,19 +69,19 @@ class Log(object):
 		
 		self.subscribers = []
 		self.debugLog(constants.kLogInitComplete)
-		self.setLogFile(outPath)
+		self.SetLogFile(outPath)
 	
 	'''
 	Closes all resources the log system may have been using.
 	Should only be called at application shutdown.
 	'''
-	def shutdown(self):
+	def Shutdown(self):
 		self.debugLog(constants.kLogInShutdown)
 		#Flush the current buffer.
 		self.flushBuffer()
 		
 		#Unhook all subscribers.
-		self.detachAll()
+		self.DetachAll()
 		
 		#Close the output file.
 		if self.outFile is not None:
@@ -73,7 +92,7 @@ class Log(object):
 	Raises:
 		* TypeError if [subscriber] is not a subclass of ListenerBase.
 	'''
-	def attach(self, subscriber):
+	def Attach(self, subscriber):
 		#Make sure the subscriber actually is an output module.
 		if not issubclass(subscriber.__class__, ListenerBase):
 			failStr = constants.kFmtLogSubscribeFailed.format(subscriber)
@@ -84,37 +103,19 @@ class Log(object):
 	'''
 	Disconnects the given listener from the log buffer.
 	'''
-	def detach(self, subscriber):
+	def Detach(self, subscriber):
 		if subscriber in self.subscribers:
 			self.subscribers.remove(subscriber)
 	
-	def detachAll(self):
+	def DetachAll(self):
 		for s in self.subscribers:
 			self.subscribers.remove(s)
-	
-	'''
-	Broadcasts the current line to all subscribers.
-	'''
-	def broadcast(self, msg):
-		assert self.bufferHead >= 0
-		
-		#For each subscriber:
-		for subscriber in self.subscribers:
-			#Does this subscriber have a high enough verbosity?
-			levelMatches = msg.logLevel >= subscriber.logLevel()
-			#Does this subscriber care about this kind of message?
-			isAllTagged = msg.tag == constants.kTagAll
-			isInTags = not subscriber.tags() or (subscriber.tags() and msg.tag in subscriber.tags())
-			tagMatches = (isAllTagged or isInTags)
-			if levelMatches and tagMatches:
-				#If both are true, print the line to the subscriber.
-				subscriber.printMessage(msg);
 	
 	'''
 	Adds the requested message to the log's buffer
 	and broadcasts the message to all interested subscribers.
 	'''
-	def log(self, message, level=LogLevel.Verbose, tag=constants.kTagEmpty):
+	def Log(self, message, level=LogLevel.Verbose, tag=constants.kTagEmpty):
 		#Add this line to the buffer:
 		#Do we have space in the buffer?
 		if self.bufferHead >= constants.kLogBufferMaxLines-1:
@@ -128,25 +129,25 @@ class Log(object):
 		#Broadcast the new line to all subscribers.
 		self.broadcast(newMsg)
 		
-	def logVerbose(self, message, tag=constants.kTagEmpty):
-		self.log(message, LogLevel.Verbose, tag)
+	def LogVerbose(self, message, tag=constants.kTagEmpty):
+		self.Log(message, LogLevel.Verbose, tag)
 	
-	def logDebug(self, message, tag=constants.kTagEmpty):
-		self.log(message, LogLevel.Debug, tag)
+	def LogDebug(self, message, tag=constants.kTagEmpty):
+		self.Log(message, LogLevel.Debug, tag)
 	
-	def logInfo(self, message, tag=constants.kTagEmpty):
-		self.log(message, LogLevel.Info, tag)
+	def LogInfo(self, message, tag=constants.kTagEmpty):
+		self.Log(message, LogLevel.Info, tag)
 	
-	def logWarning(self, message, tag=constants.kTagEmpty):
-		self.log(message, LogLevel.Warning, tag)
+	def LogWarning(self, message, tag=constants.kTagEmpty):
+		self.Log(message, LogLevel.Warning, tag)
 		
-	def logError(self, message, tag=constants.kTagEmpty):
-		self.log(message, LogLevel.Error, tag)
+	def LogError(self, message, tag=constants.kTagEmpty):
+		self.Log(message, LogLevel.Error, tag)
 	
 	'''
 	Gets the currently opened log file, if any.
 	'''
-	def logFile(self):
+	def LogFile(self):
 		if self.outFile is not None:
 			return self.outFile.name
 		else:
@@ -156,7 +157,7 @@ class Log(object):
 	Closes any currently open log file and uses the specified path as the new log file.
 	If outPath is None or an empty string, does nothing.
 	'''
-	def setLogFile(self, outPath):
+	def SetLogFile(self, outPath):
 		newOutFile = None
 		#Early out.
 		if outPath is None or not outPath:
@@ -184,7 +185,7 @@ class Log(object):
 '''
 Gets an instance of Log representing the program's log buffer.
 '''		
-def getLogInstance():
+def GetLogInstance():
 	global sLogInstance
 	if sLogInstance is None:
 		sLogInstance = Log()

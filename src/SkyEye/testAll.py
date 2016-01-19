@@ -9,19 +9,19 @@ from SkyEye import Logging
 from SkyEye import Database
 
 def main():
-	mLog = log.getLogInstance()
+	mLog = log.GetLogInstance()
 	print "Testing logger..."
-	Logging.tests.testAll(mLog)
+	Logging.tests.TestAll(mLog)
 	
 	#Attach our actual console listener.
 	stdOut = ConsoleListener()
-	mLog.attach(stdOut)
+	mLog.Attach(stdOut)
 	
-	mLog.logDebug("Testing database...")
-	Database.tests.testAll(mLog)
+	mLog.LogDebug("Testing database...")
+	Database.tests.TestAll(mLog)
 	
 	#Shutdown the logger.
-	mLog.shutdown()
+	mLog.Shutdown()
 	
 if __name__ == '__main__':
 	main()

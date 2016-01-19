@@ -4,12 +4,12 @@ Created on Jan 15, 2016
 @author: Me
 '''
 import psycopg2
+import constants
 from ..Logging import log
 from ..Logging.structs import LogLevel
-import constants
 from ..Constants import stringConstants
 
-sLog = log.getLogInstance()
+sLog = log.GetLogInstance()
 
 '''
 Represents a database connection.
@@ -25,14 +25,14 @@ class Database(object):
 	#failMsg should be a format string where the last parameter is the error string.
 	def execute(self, query, queryParams, failMsg, failMsgParams = ()):
 		if not self.connected:
-			sLog.log(constants.kFmtErrNotConnected.format(constants.kMethodExecute), LogLevel.Verbose)
+			sLog.Log(constants.kFmtErrNotConnected.format(constants.kMethodExecute), LogLevel.Verbose)
 			return False
 		try:
 			self.cursor.execute(query,
 						queryParams)
 		except psycopg2.Error as e:
 			allParams = failMsgParams + (e,)
-			sLog.log(failMsg.format(*allParams), LogLevel.Error)
+			sLog.Log(failMsg.format(*allParams), LogLevel.Error)
 			self.connection.rollback()
 			return False
 		self.connection.commit()
@@ -41,7 +41,7 @@ class Database(object):
 	def executeOnTable(self, tableName, invalidTableMsg, query, queryParams, failMsg, failMsgParams = ()):
 		#Sanity check.
 		if not tableName:
-			sLog.log(invalidTableMsg, LogLevel.Warning)
+			sLog.Log(invalidTableMsg, LogLevel.Warning)
 			return False
 		
 		return self.execute(query, queryParams, failMsg, failMsgParams)
@@ -114,9 +114,9 @@ class Database(object):
 	on this machine.
 	Returns True if the connection was successful, False otherwise.
 	'''
-	def connect(self, pDatabase, pUser, pPassword):
+	def Connect(self, pDatabase, pUser, pPassword):
 		port = constants.kDefaultDatabasePort
-		sLog.log(constants.kFmtConnectionAttempted.format(constants.kMethodConnect, pDatabase, port, pUser),
+		sLog.Log(constants.kFmtConnectionAttempted.format(constants.kMethodConnect, pDatabase, port, pUser),
 				LogLevel.Debug)
 		try:
 			#Open the connection.
@@ -127,19 +127,19 @@ class Database(object):
 			#Now get a cursor to start operations.
 			self.cursor = self.connection.cursor();
 			self.connected = True
-			sLog.log(constants.kFmtConnectionSucceeded.format(constants.kMethodConnect, pDatabase, port, pUser),
+			sLog.Log(constants.kFmtConnectionSucceeded.format(constants.kMethodConnect, pDatabase, port, pUser),
 					LogLevel.Debug)
 			return True
 		except psycopg2.Error as e:
 			#Something bad happened.
-			sLog.log(constants.kFmtErrConnectionFailed.format(constants.kMethodConnect, e), LogLevel.Error)
-			self.close()
+			sLog.Log(constants.kFmtErrConnectionFailed.format(constants.kMethodConnect, e), LogLevel.Error)
+			self.Close()
 			return False
 		
 	'''
 	Closes database connection.
 	'''
-	def close(self):
+	def Close(self):
 		if self.cursor is not None:
 			self.cursor.close()
 		if self.connection is not None:
@@ -150,7 +150,7 @@ class Database(object):
 	Returns True if the requested table exists,
 	False otherwise.
 	'''
-	def tableExists(self, tableName):
+	def TableExists(self, tableName):
 		if self.executeOnTable(tableName,
 							constants.kFmtErrBadTableName.format(constants.kMethodTableExists),
 							constants.kQueryCheckTableExists,
@@ -165,7 +165,7 @@ class Database(object):
 	Returns the table's schema if successful,
 	or an empty tuple if the table could not be found for any reason.
 	'''
-	def describeTable(self, tableName):
+	def DescribeTable(self, tableName):
 		if self.executeOnTable(tableName,
 							constants.kFmtErrBadTableName.format(constants.kMethodDescribeTable),
 							constants.kQueryDescribeTable,
@@ -178,9 +178,9 @@ class Database(object):
 	Attempts to drop the requested table.
 	Returns True if the table was dropped, False otherwise.
 	'''
-	def dropTable(self, tableName):
+	def DropTable(self, tableName):
 		queryStr = constants.kQueryDropTable.format(tableName)
-		sLog.logWarning(constants.kFmtWarnDroppingTable.format(constants.kMethodDropTable, tableName),
+		sLog.LogWarning(constants.kFmtWarnDroppingTable.format(constants.kMethodDropTable, tableName),
 					constants.kTagDatabase)
 		return self.executeOnTable(tableName,
 							constants.kFmtErrBadTableName.format(constants.kMethodDropTable),
@@ -193,10 +193,10 @@ class Database(object):
 	Attempts to create the requested table with the given schema.
 	Returns True if the table was created, False otherwise.
 	'''
-	def createTable(self, schema):
+	def CreateTable(self, schema):
 		#Sanity check.
 		if not schema.schemaName:
-			sLog.log(constants.kFmtErrBadTableName.format(constants.kMethodCreateTable), LogLevel.Warning)
+			sLog.Log(constants.kFmtErrBadTableName.format(constants.kMethodCreateTable), LogLevel.Warning)
 			return
 		
 		#Build the CREATE TABLE string.
@@ -204,7 +204,7 @@ class Database(object):
 		
 		#Do our query!
 		createString = constants.kFmtQueryCreateTable.format(schema.schemaName, columns)
-		sLog.logDebug(constants.kFmtCreatingTable.format(constants.kMethodCreateTable, createString),
+		sLog.LogDebug(constants.kFmtCreatingTable.format(constants.kMethodCreateTable, createString),
 					constants.kTagDatabase)
 		return self.execute(createString,
 					(),

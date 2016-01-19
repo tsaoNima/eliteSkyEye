@@ -16,25 +16,25 @@ class ListenerBase(object):
 		self.mLogLevel = LogLevel.Info
 		self.mTags = []
 	
-	def printMessage(self, message):
-		raise NotImplementedError("Listeners must implement printMessage()!")
+	def PrintMessage(self, message):
+		raise NotImplementedError("Listeners must implement PrintMessage()!")
 	
-	def logLevel(self):
+	def LogLevel(self):
 		return self.mLogLevel
 	
-	def setLogLevel(self, pLogLevel):
+	def SetLogLevel(self, pLogLevel):
 		self.mLogLevel = pLogLevel
 	
-	def tags(self):
+	def Tags(self):
 		return self.mTags
 	
-	def addTag(self, pTag):
+	def AddTag(self, pTag):
 		if pTag not in self.mTags:
 			self.mTags.append(pTag)
 	
-	def removeTag(self, pTag):
+	def RemoveTag(self, pTag):
 		if pTag in self.mTags:
 			self.mTags.remove(pTag)
 	
-	def clearTags(self):
+	def ClearTags(self):
 		self.mTags = []

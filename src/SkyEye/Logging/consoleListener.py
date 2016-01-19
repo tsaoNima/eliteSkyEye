@@ -30,11 +30,11 @@ class ConsoleListener(ListenerBase):
 		#Start Colorama.
 		colorama.init()
 		
-	def shutdown(self):
+	def Shutdown(self):
 		#Shutdown Colorama.
 		colorama.deinit()
 		
-	def printMessage(self, message):
+	def PrintMessage(self, message):
 		#Color depends on severity.
 		textColor = sFormatMap[message.logLevel] + Style.BRIGHT
 		#Print the message and then print a newline.

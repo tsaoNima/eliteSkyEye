@@ -3,6 +3,7 @@ Created on Jan 18, 2016
 
 @author: Me
 '''
+from Database import setupTables
 
 '''
 Represents the server connection.
@@ -31,7 +32,7 @@ class Server(object):
 	'''
 	Returns True if we successfully logged in, False otherwise.
 	'''
-	def login(self):
+	def Login(self):
 		#First, see if we have valid credentials.
 		#Do we have any credentials, and if so can we log in with them?
 		pass
@@ -45,7 +46,7 @@ class Server(object):
 		#Maximum tries exceeded, abort login.
 		return False
 	
-	def firstTimeSetup(self):
+	def FirstTimeSetup(self):
 		#Login loop:
 		#	Ask for the admin password to the DB. DO NOT STORE THIS.
 		#	Logon to "postgres" as the admin "postgres".
@@ -59,16 +60,16 @@ class Server(object):
 		
 		#Login as DB admin.
 		#Create all default tables.
+		setupTables.SetupTables(user, password)
 		#Ideally, fill in the tables with default data.
-		
-		#Setup guest group role.
-		#Guest can read tables, but not modify.
-		#Setup base user group role.
-		#Base users can see and update data.
-		#Finally set up verifier group role.
-		#Verifiers can confirm submitted data as valid.
 		pass
 	
-	def logout(self):
+	def VerifyTables(self):
+		#Abort if we're not logged in.
+		
+		#Get the admin login, pass that to the verify function.
+		return setupTables.VerifyTables(user, password)
+	
+	def Logout(self):
 		#Disconnect from subsystems.
 		self.loggedIn = False
