@@ -12,13 +12,6 @@ class SkyEyeDaemon(object):
 	def loadSettings(self):
 		pass
 	
-	#Returns True if the database is now active, False otherwise.
-	def activateDatabase(self):
-		#Make sure DB is up. If not, try to start it.
-		pass
-		#	If we couldn't start DB, fail here.
-		pass 
-	
 	def firstRunSetup(self):
 		#Ask for the admin password to the DB. DO NOT STORE THIS.
 		#Enter the db and do first time setup.
@@ -47,9 +40,6 @@ class SkyEyeDaemon(object):
 		#Try to load settings.
 		self.loadSettings()
 		
-		if not self.activateDatabase():
-			raise RuntimeError("Couldn't start database!") #TODO: add detail
-		
 		#Is this our first boot?
 		isFirstBoot = pass
 		if isFirstBoot:
@@ -70,6 +60,8 @@ class SkyEyeDaemon(object):
 		pass
 	
 		#Establish connection to inputs (HTTP API, etc.)
+		pass
+		
 		#Report that we're open.
 		pass
 		
