@@ -180,7 +180,8 @@ class Database(object):
 	'''
 	def dropTable(self, tableName):
 		queryStr = constants.kQueryDropTable.format(tableName)
-		sLog.logWarning("Database.dropTable(): Drop requested! Dropping table {0}".format(tableName), "Database")
+		sLog.logWarning(constants.kFmtWarnDroppingTable.format(constants.kMethodDropTable, tableName),
+					constants.kTagDatabase)
 		return self.executeOnTable(tableName,
 							constants.kFmtErrBadTableName.format(constants.kMethodDropTable),
 							queryStr,
@@ -203,8 +204,8 @@ class Database(object):
 		
 		#Do our query!
 		createString = constants.kFmtQueryCreateTable.format(schema.schemaName, columns)
-		sLog.logVerbose("Database.createTable(): Table creation requested.\nCreate string: \"{0}\"".format(createString),
-					"Database")
+		sLog.logDebug(constants.kFmtCreatingTable.format(constants.kMethodCreateTable, createString),
+					constants.kTagDatabase)
 		return self.execute(createString,
 					(),
 					constants.kFmtErrCreateTableFailed,

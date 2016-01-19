@@ -72,13 +72,13 @@ def testAll(pLog):
 	
 	#Test dropping a table.
 	pLog.logDebug("Testing dropTable()...")
-	dbConnection.dropTable(relatedTableName)
+	#dbConnection.dropTable(relatedTableName)
 	#Make sure the table's actually gone.
 	if dbConnection.tableExists(relatedTableName):
 		pLog.logError("Test table \"{0}\" was not successfully dropped!".format(relatedTableName))
 		
 	#Delete the other table too.
-	dbConnection.dropTable(testTableName)
+	#dbConnection.dropTable(testTableName)
 	if dbConnection.tableExists(testTableName):
 		pLog.logError("Test table \"{0}\" was not successfully dropped!".format(testTableName))
 		

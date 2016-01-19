@@ -20,13 +20,18 @@ kMethodCreateTable = "Database.createTable()"
 kMethodVerifyGDW = "Database.verifyGDW()"
 kMethodVerifyRDA = "Database.verifyRDA()"
 
+#Tags...
+kTagDatabase = "Database"
+
 #Log strings...
 kFmtErrNotConnected = "{0}: Not connected to database, aborting"
 kFmtConnectionAttempted = "{0}: Connecting to {1}:{2} as {3}..."
 kFmtConnectionSucceeded = "{0}: Connection to {1}:{2} as {3} successful."
 kFmtErrConnectionFailed = "{0}: Connection failed with error: {1}"
 kFmtErrBadTableName = "{0}: invalid table name passed, aborting"
+kFmtWarnDroppingTable = "{0}: Drop requested! Dropping table {1}"
 kFmtErrDropTableFailed = "{0}: Table drop failed with error: {1}"
+kFmtCreatingTable = "{0}: Table creation requested.\nCreate string: \"{1}\""
 kFmtErrCreateTableFailed = "{0}: Table create failed with error: {1}"
 kFmtErrTableExistsFailed = "{0}: Table existence check failed with error: {1}"
 kFmtErrDescribeTableFailed = "Database.describeTable(): Table description failed with error: {0}"

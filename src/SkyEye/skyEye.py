@@ -7,6 +7,11 @@ import setupTables
 class SkyEyeDaemon(object):
 	mLog = log.getLogInstance()
 
+	def firstRunSetup(self):
+		#Ask for the admin password to the DB. DO NOT STORE THIS.
+		#Enter the db and do first time setup.
+		pass
+
 	def __init__(self, logPath=None):
 		self.mLog = log.getLogInstance()
 		#Open the log file!
@@ -17,7 +22,16 @@ class SkyEyeDaemon(object):
 		except:
 			self.mLog.log(stringConstants.kFmtErrSkyEyeLogOpenFailed.format(logPath), LogLevel.Error)
 		
-		#Open DB connection.
+		#Try to load settings.
+		pass
+		
+		#Make sure DB is up. If not, try to start it.
+		#	If we couldn't start DB, fail here. 
+		
+		#Is this our first boot?
+		#	If so, enter setup.
+		
+		#Open server connection.
 		pass
 		
 		#Make sure all the tables we need are actually there;
