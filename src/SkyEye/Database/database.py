@@ -54,7 +54,10 @@ class Database(object):
 			result = constraint
 		else:
 			#Otherwise, use subsequent elements as parameters.
-			pass
+			#In practice only REFERENCES has parameters, and for now it only refers to the table;
+			#We don't FK on anything besides the referent's PK, so that's fine.
+			assert len(constraint) > 1
+			result = constraint[0] + " " + constraint[1]
 		return result
 	
 	def buildSingleColumn(self, column):
@@ -177,6 +180,7 @@ class Database(object):
 	'''
 	def dropTable(self, tableName):
 		queryStr = constants.kQueryDropTable.format(tableName)
+		sLog.logWarning("Database.dropTable(): Drop requested! Dropping table {0}".format(tableName), "Database")
 		return self.executeOnTable(tableName,
 							constants.kFmtErrBadTableName.format(constants.kMethodDropTable),
 							queryStr,
@@ -199,7 +203,8 @@ class Database(object):
 		
 		#Do our query!
 		createString = constants.kFmtQueryCreateTable.format(schema.schemaName, columns)
-		sLog.logVerbose("Database.createTable(): Create string: \"{0}\"".format(createString))
+		sLog.logVerbose("Database.createTable(): Table creation requested.\nCreate string: \"{0}\"".format(createString),
+					"Database")
 		return self.execute(createString,
 					(),
 					constants.kFmtErrCreateTableFailed,

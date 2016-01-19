@@ -26,12 +26,12 @@ def testAll(pLog):
 		return
 	
 	#Test creating a table.
-	testTableName = "TestTable"
+	testTableName = "test_table"
 	pLog.logDebug("Testing createTable()...")
 	testSchema = Schema(testTableName, (
-					("Id", Types.int, (Modifiers.primaryKey,)),
-					("VarCharColumn", Types.varchar, (Modifiers.notNull,), constants.kSchemaNameLenMax),
-					("BoolColumn", Types.bool, ())
+					("id", Types.int, (Modifiers.primaryKey,)),
+					("var_char_column", Types.varchar, (Modifiers.notNull,), constants.kSchemaNameLenMax),
+					("bool_column", Types.bool, ())
 					))
 	if not dbConnection.createTable(testSchema):
 		pLog.logError("Table creation failed, aborting!")
@@ -54,10 +54,31 @@ def testAll(pLog):
 	else:
 		pLog.logDebug("Description of table \"{0}\":\n{1}".format(testTableName, tableDesc))
 	
+	#Test creating a related table.
+	pLog.logDebug("Creating table with foreign key...")
+	relatedTableName = "related_table"
+	relatedSchema = Schema(relatedTableName,
+						(
+						("id", Types.int, (Modifiers.primaryKey,)),
+						("test_table", Types.int, (Modifiers.notNull, (Modifiers.references, testSchema.schemaName))),
+						("another_column", Types.float, ())
+						))
+	if not dbConnection.createTable(relatedSchema):
+		pLog.logError("Table w/ foreign key creation failed!")
+	else:
+		#Try to describe the table.
+		tableDesc = dbConnection.describeTable(relatedTableName)
+		pLog.logDebug("Description of table \"{0}\":\n{1}".format(relatedTableName, tableDesc))
+	
 	#Test dropping a table.
 	pLog.logDebug("Testing dropTable()...")
-	dbConnection.dropTable(testTableName)
+	dbConnection.dropTable(relatedTableName)
 	#Make sure the table's actually gone.
+	if dbConnection.tableExists(relatedTableName):
+		pLog.logError("Test table \"{0}\" was not successfully dropped!".format(relatedTableName))
+		
+	#Delete the other table too.
+	dbConnection.dropTable(testTableName)
 	if dbConnection.tableExists(testTableName):
 		pLog.logError("Test table \"{0}\" was not successfully dropped!".format(testTableName))
 		

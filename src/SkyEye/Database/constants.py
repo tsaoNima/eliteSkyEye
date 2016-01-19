@@ -37,20 +37,20 @@ kFmtWarnSchemaFailed = "{0}: Schema {1} failed verification!"
 #Queries...
 #Describes the requested table.
 #0: Table name.
-kQueryDescribeTable = ("select column_name, data_type, character_maximum_length, is_nullable "  
-"from information_schema.columns where table_name = %s;")
+kQueryDescribeTable = ("SELECT column_name, data_type, character_maximum_length, is_nullable "  
+"FROM information_schema.columns WHERE table_name = %s;")
 #Returns true if the requested table exists, false otherwise.
 #Note that this doesn't check the current schema!
 #0: Table name.
-kQueryCheckTableExists = ("select exists (select * from information_schema.tables "
-						"where table_name = %s);")
+kQueryCheckTableExists = ("SELECT EXISTS (SELECT * FROM information_schema.tables "
+						"WHERE table_name = %s);")
 #Drops the requested table.
 #0: Table name.
-kQueryDropTable = "drop table \"{0}\";"
+kQueryDropTable = "DROP TABLE \"{0}\";"
 #Creates the requested table.
 #0: Table name.
 #1: Column info. Should be prebuilt and filled in with the formatter.
-kFmtQueryCreateTable = "create table \"{0}\" ({1});"
+kFmtQueryCreateTable = "CREATE TABLE {0} ({1});"
 #0: Column name.
 #1: Column type.
 #2: Column precision, if any.
