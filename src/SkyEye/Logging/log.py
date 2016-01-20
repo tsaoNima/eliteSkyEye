@@ -71,7 +71,7 @@ class Log(object):
 		self.logBuffer = []
 		#Preallocate buffer space because I don't want to use append() later.
 		for i in xrange(constants.kLogBufferMaxLines):
-			emptyMsg = LogElem(self.getTimeStamp(), "", LogLevel.Verbose, constants.kTagEmpty)
+			emptyMsg = LogElem(self.getTimeStamp(), "", LogLevel.Verbose, constants.kTagEmpty, constants.kWhereUnknown)
 			self.logBuffer.append(emptyMsg)
 		self.bufferHead = -1
 		
