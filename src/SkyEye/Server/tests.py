@@ -3,47 +3,38 @@ Created on Jan 20, 2016
 
 @author: Me
 '''
-from SkyEye.Logging import log
-from SkyEye.Logging.consoleListener import ConsoleListener
-from SkyEye.Logging.structs import LogLevel
 import setupTables
+from SkyEye.Testing.testBase import TestBase
 
-sLog = log.GetLogInstance()
-
-def testSetupTables():
-	kMethodTestSetupTables = "tests.testSetupTables()"
-	user = "testUser"
-	password = "testPassword"
-	sLog.LogDebug(("Please make sure that the server has the following SUPERuser created:\n"
-				"\tUsername: {0}\n"
-				"\tPassword: {1}\n").format(user, password),
-				where=kMethodTestSetupTables)
+class ServerTests(TestBase):
+	def testSetupTables(self):
+		kMethodTestSetupTables = "tests.testSetupTables()"
+		user = "testUser"
+		password = "testPassword"
+		self.logSystem.LogDebug(("Please make sure that the server has the following SUPERuser created:\n"
+					"\tUsername: {0}\n"
+					"\tPassword: {1}\n").format(user, password),
+					where=kMethodTestSetupTables)
+		
+		#Run SetupTables first,
+		#otherwise VerifyTables won't do jack.
+		self.logSystem.LogDebug("Running SetupTables()...", where=kMethodTestSetupTables)
+		setupTables.SetupTables(user, password)
+		
+		#Run VerifyTables.
+		self.logSystem.LogDebug("Running VerifyTables()...", where=kMethodTestSetupTables)
+		self.logSystem.LogWarning("TODO: testSetupTables() not implemented!", where=kMethodTestSetupTables)
+		return False
 	
-	#Run SetupTables first,
-	#otherwise VerifyTables won't do jack.
-	sLog.LogDebug("Running SetupTables()...", where=kMethodTestSetupTables)
-	setupTables.SetupTables(user, password)
+		return True
+
+	def testServer(self):
+		self.logSystem.LogWarning("TODO: testServer() not implemented!", where="tests.testServer()")
+		return False
 	
-	#Run VerifyTables.
-	sLog.LogDebug("Running VerifyTables()...", where=kMethodTestSetupTables)
-	sLog.LogWarning("TODO: testSetupTables() not implemented!", where=kMethodTestSetupTables)
-	pass
-
-def testServer():
-	sLog.LogWarning("TODO: testServer() not implemented!", where="tests.testServer()")
-	pass
-
-def TestAll():
-	sLog.LogVerbose("Testing setupTables.py calls...", where="tests.TestAll()")
-	testSetupTables()
-	sLog.LogVerbose("Testing server.py calls...", where="tests.TestAll()")
-	testServer()
+	def onTestAll(self):
+		self.DoTest(self.testSetupTables)
+		self.DoTest(self.testServer)
 	
 def main():
-	listener = ConsoleListener()
-	listener.SetLogLevel(LogLevel.Verbose)
-	sLog.Attach(listener)
-	
-	TestAll()
-	
-	sLog.Shutdown()
+	ServerTests().BatchRun()

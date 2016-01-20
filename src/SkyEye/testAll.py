@@ -7,18 +7,19 @@ from Logging import log
 from Logging.consoleListener import ConsoleListener
 from SkyEye import Logging
 from SkyEye import Database
+from SkyEye import Server
 
 def main():
 	mLog = log.GetLogInstance()
 	print "Testing logger..."
-	Logging.tests.TestAll(mLog)
+	Logging.tests.LogTests().TestAll()
 	
 	#Attach our actual console listener.
 	stdOut = ConsoleListener()
 	mLog.Attach(stdOut)
 	
-	mLog.LogDebug("Testing database...", where="testAll.main()")
-	Database.tests.TestAll(mLog)
+	Database.tests.DatabaseTests().TestAll()
+	Server.tests.ServerTests().TestAll()
 	
 	#Shutdown the logger.
 	mLog.Shutdown()

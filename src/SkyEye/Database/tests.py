@@ -190,16 +190,16 @@ class DatabaseTests(TestBase):
 					where=kMethod)
 		
 		#Try connecting to a database.
-		self.DoTest(self.testConnection, kMethod, True)
+		self.DoTest(self.testConnection, (), kMethod, True)
 		
 		#Test all the table operations first.
-		self.DoTest(self.testTableOps, kMethod)
+		self.DoTest(self.testTableOps, (), kMethod)
 		
 		#Test user operations.
-		self.DoTest(self.testUserOps, kMethod)
+		self.DoTest(self.testUserOps, (), kMethod)
 		
 		#Test database ops.
-		self.DoTest(self.testDBOps, kMethod)
+		self.DoTest(self.testDBOps, (), kMethod)
 		
 		#Disconnect our connection.
 		self.logSystem.LogDebug("Closing connection to server...", where=kMethod)

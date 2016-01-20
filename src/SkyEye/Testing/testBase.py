@@ -50,6 +50,9 @@ class TestBase(object):
 		"""Runs all tests in this test module.
 		"""
 		self.reset()
+		self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__name__),
+							constants.kTagTesting,
+							constants.kMethodTestAll)
 		try:
 			self.onTestAll()
 		except TestFailedError:

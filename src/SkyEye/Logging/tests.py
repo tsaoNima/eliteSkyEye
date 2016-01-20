@@ -7,36 +7,45 @@ import log
 import consoleListener
 import constants
 from structs import LogLevel
+from SkyEye.Testing.testBase import TestBase
 
-def TestAll(pLog):
-	kMethodTestAll = "tests.TestAll()"
+class LogTests(TestBase):
+	def testLogging(self):
+		kMethodTestAll = "tests.TestAll()"
 	
-	#Get a connection to the log system.
-	pLog.SetLogFile("./testLogging.log")
-	print "Got log instance."
-	#Attach stdout listener.
-	stdOut = consoleListener.ConsoleListener()
-	stdOut.SetLogLevel(LogLevel.Verbose)
-	pLog.Attach(stdOut)
-	print "Attached console listener."
-	print "Testing log output..."
-	#Test all levels.
-	pLog.LogVerbose("Verbose message.", where=kMethodTestAll)
-	pLog.LogDebug("Debug message.", where=kMethodTestAll)
-	pLog.LogInfo("Info message.", where=kMethodTestAll)
-	pLog.LogWarning("Warning message.", where=kMethodTestAll)
-	pLog.LogError("Error message.", where=kMethodTestAll)
-	#Test tags.
-	testTag = "testTag"
-	stdOut.AddTag(testTag)
-	pLog.LogInfo("This message should be visible to stdout...", constants.kTagAll, where=kMethodTestAll)
-	pLog.LogInfo("But this one shouldn't!", where=kMethodTestAll)
-	pLog.LogInfo("This message is tagged for stdout specifically.", testTag, where=kMethodTestAll)
+		#Get a connection to the log system.
+		self.logSystem.SetLogFile("./testLogging.log")
+		print "Got log instance."
+		
+		#Attach stdout listener.
+		stdOut = consoleListener.ConsoleListener()
+		stdOut.SetLogLevel(LogLevel.Verbose)
+		self.logSystem.Attach(stdOut)
+		print "Attached console listener."
+		print "Testing log output..."
+		
+		#Test all levels.
+		self.logSystem.LogVerbose("Verbose message.", where=kMethodTestAll)
+		self.logSystem.LogDebug("Debug message.", where=kMethodTestAll)
+		self.logSystem.LogInfo("Info message.", where=kMethodTestAll)
+		self.logSystem.LogWarning("Warning message.", where=kMethodTestAll)
+		self.logSystem.LogError("Error message.", where=kMethodTestAll)
+		
+		#Test tags.
+		testTag = "testTag"
+		stdOut.AddTag(testTag)
+		self.logSystem.LogInfo("This message should be visible to stdout...", constants.kTagAll, where=kMethodTestAll)
+		self.logSystem.LogInfo("But this one shouldn't!", where=kMethodTestAll)
+		self.logSystem.LogInfo("This message is tagged for stdout specifically.", testTag, where=kMethodTestAll)
+		
+		print "Disconnecting from logger."
+		self.logSystem.DetachAll()
+		
+		return True
 	
-	print "Disconnecting from logger."
-	pLog.DetachAll()
-	
+	def onTestAll(self):
+		kMethod = "tests.onTestAll()"
+		self.DoTest(self.testLogging, (), kMethod, True)
+
 if __name__ == "__main__":
-	mLog = log.GetLogInstance()
-	TestAll(mLog)
-	mLog.Shutdown()
+	LogTests().BatchRun()
