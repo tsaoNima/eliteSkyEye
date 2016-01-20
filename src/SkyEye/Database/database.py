@@ -11,19 +11,21 @@ from ..Exceptions import exceptions
 
 sLog = log.GetLogInstance()
 
-'''
-Represents a database connection.
-'''
 class Database(object):
+	"""Represents a database connection.
+	"""
+	
 	#PostgreSQL connection.
 	connection = None
 	#The cursor, the thing that you perform database operations on.
 	cursor = None
 	connected = False
 	
-	#Returns True if query was successful, False otherwise.
-	#failMsg should be a format string where the last parameter is the error string.
 	def execute(self, callerName, query, queryParams, failMsg, failMsgParams = ()):
+		"""
+		Returns True if query was successful, False otherwise.
+		failMsg should be a format string where the last parameter is the error string.
+		"""
 		if not self.connected:
 			sLog.LogVerbose(constants.kErrNotConnected, constants.kTagDatabase, constants.kMethodExecute)
 			return False
@@ -102,25 +104,25 @@ class Database(object):
 		self.connection = None
 		self.connected = False
 	
-	'''
-	Constructor.
-	'''
 	def __init__(self):
+		"""Constructor.
+		"""
+		
 		#Initialize values to defaults.
 		self.abort()
 	
 	def IsConnected(self):
 		return self.connected
 	
-	'''
-	Attempts to connect to the requested database
-	on this machine.
-	Returns True if the connection was successful, False otherwise.
-	Raises:
-		* PaswordInvalidError if the given password was invalid.
-		* InternalServiceError if any other connection error occurred.
-	'''
 	def Connect(self, pDatabase, pUser, pPassword):
+		"""Attempts to connect to the requested database
+		on this machine.
+		Returns True if the connection was successful, False otherwise.
+		Raises:
+			* PaswordInvalidError if the given password was invalid.
+			* InternalServiceError if any other connection error occurred.
+		"""
+		
 		port = constants.kDefaultDatabasePort
 		sLog.LogDebug(constants.kFmtConnectionAttempted.format(pDatabase, port, pUser),
 				constants.kTagDatabase,
@@ -130,7 +132,7 @@ class Database(object):
 			#We probably want an autocommit connection, no point being explicit.
 			#Host is localhost and port is going to be 5432.
 			self.connection = psycopg2.connect(database=pDatabase, user=pUser, password=pPassword)
-			#self.connection.autocommit = True
+			self.connection.autocommit = True
 			#Now get a cursor to start operations.
 			self.cursor = self.connection.cursor();
 			self.connected = True
@@ -153,21 +155,22 @@ class Database(object):
 			raise newError
 			return False
 		
-	'''
-	Closes database connection.
-	'''
+	
 	def Disconnect(self):
+		"""Closes database connection.
+		"""
+		
 		if self.cursor is not None:
 			self.cursor.close()
 		if self.connection is not None:
 			self.connection.close()
 		self.abort()
 	
-	'''
-	Returns True if the requested table exists,
-	False otherwise.
-	'''
 	def TableExists(self, tableName):
+		"""Returns True if the requested table exists,
+		False otherwise.
+		"""
+		
 		if self.executeOnTable(constants.kMethodTableExists,
 							tableName,
 							constants.kQueryCheckTableExists,
@@ -175,13 +178,13 @@ class Database(object):
 							constants.kFmtErrTableExistsFailed):
 			return self.cursor.fetchone()[0]
 		return False
-	
-	'''
-	Describes a given table.
-	Returns the table's schema if successful,
-	or an empty tuple if the table could not be found for any reason.
-	'''
+
 	def DescribeTable(self, tableName):
+		"""Describes a given table.
+		Returns the table's schema if successful,
+		or an empty tuple if the table could not be found for any reason.
+		"""
+		
 		if self.executeOnTable(constants.kMethodDescribeTable,
 							tableName,
 							constants.kQueryDescribeTable,
@@ -190,11 +193,11 @@ class Database(object):
 			return self.cursor.fetchall()
 		return ()
 	
-	'''
-	Attempts to drop the requested table.
-	Returns True if the table was dropped, False otherwise.
-	'''
 	def DropTable(self, tableName):
+		"""Attempts to drop the requested table.
+		Returns True if the table was dropped, False otherwise.
+		"""
+	
 		queryStr = constants.kQueryDropTable.format(tableName)
 		sLog.LogWarning(constants.kFmtWarnDroppingTable.format(tableName),
 					constants.kTagDatabase,
@@ -205,11 +208,53 @@ class Database(object):
 								(),
 								constants.kFmtErrDropTableFailed)
 		
-	'''
-	Attempts to create the requested table with the given schema.
-	Returns True if the table was created, False otherwise.
-	'''
+	def DropDatabase(self, dbName):
+		"""Attempts to drop the requested *database*.
+		Returns True if the table was dropped, False otherwise.
+		"""
+		isolationLevel = self.connection.isolation_level
+		#Switch to autocommit mode to allow this operation.
+		self.connection.set_isolation_level(0)
+		
+		queryStr = constants.kQueryDropDatabase.format(dbName)
+		sLog.LogWarning(constants.kFmtWarnDroppingDatabase.format(dbName),
+					constants.kTagDatabase,
+					constants.kMethodDropDatabase)
+		result = self.execute(constants.kMethodDropDatabase,
+								queryStr,
+								(),
+								constants.kFmtErrDropDatabaseFailed)
+		
+		#Switch back to original isolation level.
+		self.connection.set_isolation_level(isolationLevel)
+		return result
+	
+	def DropUser(self, userName):
+		"""Attempts to drop the requested user.
+		Returns True if the user was dropped, False otherwise.
+		"""
+		isolationLevel = self.connection.isolation_level
+		#Switch to autocommit mode to allow this operation.
+		self.connection.set_isolation_level(0)
+		
+		queryStr = constants.kQueryDropUser.format(userName)
+		sLog.LogWarning(constants.kFmtWarnDroppingUser.format(userName),
+					constants.kTagDatabase,
+					constants.kMethodDropUser)
+		result = self.execute(constants.kMethodDropUser,
+								queryStr,
+								(),
+								constants.kFmtErrDropUserFailed)
+		
+		#Switch back to original isolation level.
+		self.connection.set_isolation_level(isolationLevel)
+		return result
+		
 	def CreateTable(self, schema):
+		"""Attempts to create the requested table with the given schema.
+		Returns True if the table was created, False otherwise.
+		"""
+	
 		#Sanity check.
 		if not schema.schemaName:
 			sLog.LogWarning(constants.kFmtErrBadTableName.format(schema.schemaName), constants.kTagDatabase, constants.kMethodCreateTable)
@@ -227,3 +272,62 @@ class Database(object):
 						createString,
 						(),
 						constants.kFmtErrCreateTableFailed)
+		
+	def CreateDatabase(self, dbName):
+		"""Attempts to create the requested database.
+		Returns True if the database was created, False otherwise.
+		"""
+		isolationLevel = self.connection.isolation_level
+		#Switch to autocommit mode to allow this operation.
+		self.connection.set_isolation_level(0)
+		
+		queryStr = constants.kQueryCreateDatabase.format(dbName)
+		sLog.LogDebug(constants.kFmtCreatingDatabase.format(dbName),
+					constants.kTagDatabase,
+					constants.kMethodCreateDatabase)
+		result = self.execute(constants.kMethodCreateDatabase,
+								queryStr,
+								(),
+								constants.kFmtErrCreateDatabaseFailed)
+		
+		#Switch back to original isolation level.
+		self.connection.set_isolation_level(isolationLevel)
+		return result
+		
+	def CreateUser(self, userName, userPassword, isSuperUser=False, canCreateDB=False, connectionLimit=-1):
+		"""Attempts to create the requested user.
+		Returns True if the database was created, False otherwise.
+		"""
+		
+		#Sanity check.
+		if not userName or not userPassword:
+			return False
+		
+		isolationLevel = self.connection.isolation_level
+		#Switch to autocommit mode to allow this operation.
+		self.connection.set_isolation_level(0)
+		logStr = constants.kFmtCreatingUser.format(userName)
+		logLevel = LogLevel.Debug
+		#Build the query.
+		queryStr = constants.kQueryCreateUser.format(userName, userPassword)
+		if isSuperUser:
+			queryStr += " " + constants.kUserIsSuperUser
+			logStr = constants.kFmtCreatingSuperUser.format(userName)
+			logLevel = LogLevel.Warning
+		if canCreateDB:
+			queryStr += " " + constants.kUserCanCreateDB
+		if connectionLimit >= 0:
+			queryStr += " " + constants.kFmtUserConnectionLimit.format(connectionLimit)
+		sLog.Log(logStr,
+				logLevel,
+				constants.kTagDatabase,
+				constants.kMethodCreateUser)
+		result = self.execute(constants.kMethodCreateUser,
+								queryStr,
+								(),
+								constants.kFmtErrCreateUserFailed)
+		
+		#Switch back to original isolation level.
+		self.connection.set_isolation_level(isolationLevel)
+		return result
+		pass

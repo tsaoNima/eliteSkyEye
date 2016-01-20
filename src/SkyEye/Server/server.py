@@ -13,6 +13,7 @@ from ..Logging import log
 from ..Keychain import keychainOps
 from ..Logging.structs import LogLevel
 from ..Exceptions import exceptions
+from SkyEye.Server.constants import kGDWDatabaseName, kRDADatabaseName
 
 sLog = log.GetLogInstance()
 
@@ -50,7 +51,7 @@ class Server(object):
 			return False	
 		#Otherwise, ask for new login info.
 		try:
-			newPass = keychainOps.RequestPassword(constants.kPromptNewDBPassword)
+			newPass = keychainOps.PromptPassword(constants.kPromptNewDBPassword)
 			keychainOps.SetPassword(KeychainConstants.kServiceDatabase, newPass)
 			return True
 		except exceptions.SkyEyeError as e:
@@ -129,6 +130,44 @@ class Server(object):
 			sLog.LogError(constants.kErrTooManyPromptsFailed, constants.kTagServer, constants.kMethodGetCredentials)
 			return False
 	
+	def setupLog(self, message, logLevel):
+		sLog.Log(message, logLevel, constants.kTagServer, constants.kMethodFirstTimeSetup)
+		print message
+	
+	def dropEverything(self, sysAdminDB):
+		"""
+		Raises:
+			* InternalServiceError if any data was not successfully dropped.
+		"""
+		#Drop all databases.
+		for subsystem in constants.kSubsystemNames:
+			if not sysAdminDB.DropDatabase(subsystem):
+				raise exceptions.InternalServiceError("Failed to drop database {0}!".format(subsystem))
+		#Drop all users now.
+		if not sysAdminDB.DropUser(constants.kServerDBAdminName):
+			raise exceptions.InternalServiceError("Failed to drop user {0}!".format(constants.kServerDBAdminName))
+	
+	def createDBAdmin(self, sysAdminDB):
+		"""
+		Raises:
+			* InternalServiceError if the database administrator account couldn't be created.
+		"""
+		#Create our DB admin. Ask for DB admin password
+		#and store it in the keychain.
+		self.setupLog(constants.kFirstTimeSetupCreatingDBAdmin, LogLevel.Debug)
+		credentialsReset = False
+		while not credentialsReset:
+			credentialsReset = self.requestNewCredentials()
+		#Perform the CREATE USER query. This is the DB admin,
+		#so it should have rights to create a database.
+		if not sysAdminDB.CreateUser(constants.kServerDBAdminName,
+									self.getPassword(),
+									isSuperUser=True,
+									canCreateDB=True):
+			raise exceptions.InternalServiceError("Failed to create user {0}!".format(constants.kServerDBAdminName))
+		self.setupLog(constants.kFirstTimeSetupDBAdminCreated, LogLevel.Debug)
+		pass
+	
 	def __init__(self, pBatchMode = True):
 		self.gdwDatabase = Database()
 		self.rdaDatabase = Database()
@@ -158,41 +197,16 @@ class Server(object):
 			sLog.LogError(constants.kErrLoginFailed, constants.kTagServer, constants.kMethodLogin)
 		return self.loggedIn
 	
-	def setupLog(self, message, logLevel):
-		sLog.Log(message, logLevel, constants.kTagServer, constants.kMethodFirstTimeSetup)
-		print message
-	
-	def FirstTimeSetup(self):
-		"""Creates database admin account and subsystem databases for the first run.
-		This can drop all existing data; back up any existing data before running this.
+	def Logout(self):
+		"""Disconnects from the server.
 		"""
-		self.setupLog(constants.kFirstTimeSetupStarting, LogLevel.Info)
-		self.setupLog(constants.kFirstTimeSetupWarnDataLoss, LogLevel.Warning)
 		
-		#Login loop:
-		#	Ask for the admin password to the DB. DO NOT STORE THIS.
-		#	Logon to "postgres" as the admin "postgres".
-		
-		#Create our DB admin. Ask for DB admin password
-		#and store it in the keychain.
-		self.setupLog(constants.kFirstTimeSetupCreatingDBAdmin, LogLevel.Debug)
-		credentialsReset = False
-		while not credentialsReset:
-			credentialsReset = self.requestNewCredentials()
-		#Perform the CREATE USER query. This is the DB admin,
-		#so it should have rights to create a database.
-		pass
-		self.setupLog(constants.kFirstTimeSetupDBAdminCreated, LogLevel.Debug)
-		
-		#Logout from server admin!
-		
-		#Login as DB admin.
-		#Create all default tables.
-		setupTables.SetupTables(constants.kServerDBAdminName, self.getPassword())
-		#Ideally, fill in the tables with default data.
-		pass
-	
-		self.setupLog(constants.kFirstTimeSetupComplete, LogLevel.Info)
+		#Disconnect from subsystems.
+		self.gdwDatabase.Disconnect()
+		self.rdaDatabase.Disconnect()
+		self.loggedIn = False
+		#Report that we're logged out.
+		sLog.LogInfo(constants.kLogoutComplete, constants.kTagServer, constants.kMethodLogout)
 	
 	def VerifyTables(self):
 		"""Checks that all tables in the server match expected schema.
@@ -210,14 +224,67 @@ class Server(object):
 		if not self.haveCredentials():
 			raise exceptions.PasswordMissingError(constants.kErrNoAdminPassword)
 			return False
+		
+		#Perform verification.
 		return setupTables.VerifyTables(constants.kServerDBAdminName, self.getPassword())
 	
-	def Logout(self):
-		"""Disconnects from the server.
+	def FirstTimeSetup(self):
+		"""Creates database admin account and subsystem databases for the first run.
+		This can drop all existing data; back up any existing data before running this.
+		Raises:
+			* WrongModeError if server is in batch mode.
+			* InternalServiceError if the server databases couldn't be connected to.
 		"""
 		
-		#Disconnect from subsystems.
-		self.gdwDatabase.Disconnect()
-		self.rdaDatabase.Disconnect()
-		self.loggedIn = False
-		sLog.LogInfo(constants.kLogoutComplete, constants.kTagServer, constants.kMethodLogout)
+		#If we're in batch mode, quit now.
+		if self.batchMode:
+			raise exceptions.WrongModeError(genericStrings.kErrCannotPerformInBatchMode)
+			return
+		
+		self.setupLog(constants.kFirstTimeSetupStarting, LogLevel.Info)
+		self.setupLog(constants.kFirstTimeSetupWarnDataLoss, LogLevel.Warning)
+		
+		#Login loop:
+		sysAdminDB = Database()
+		sysAdminPW = ""
+		sysAdminPWValid = False
+		while not sysAdminPWValid:
+			#Ask for the system admin password to the DB.
+			sysAdminPW = keychainOps.PromptPassword(constants.kFirstTimeSetupPromptSysAdminPassword)
+			#Logon to "postgres" as the admin "postgres".
+			try:
+				sysAdminDB.Connect(constants.kSysAdminDatabaseName,
+							constants.kSysAdminUserName,
+							sysAdminPW)
+				sysAdminPWValid = True
+			except exceptions.PasswordInvalidError:
+				print constants.kFirstTimeSetupErrSysAdminPasswordInvalid
+				sysAdminPWValid = False
+			#Bubble any other exception up.
+			except exceptions.SkyEyeError as e:
+				raise e
+				return
+				
+		#Clear all existing data.
+		self.dropEverything(sysAdminDB)
+		self.createDBAdmin(sysAdminDB)
+		
+		#Logout from server admin!
+		sysAdminDB.Disconnect()
+		
+		#Login as DB admin to the system admin table.
+		sysAdminDB.Connect(constants.kSysAdminDatabaseName,
+						constants.kServerDBAdminName,
+						self.getPassword())
+		#Create subsystem databases.
+		for subsystem in constants.kSubsystemNames:
+			sysAdminDB.CreateDatabase(subsystem)
+		
+		#Logout from the system admin table!
+		sysAdminDB.Disconnect()
+		
+		#Create all default tables.
+		setupTables.SetupTables(constants.kServerDBAdminName, self.getPassword())
+	
+		#We're done!
+		self.setupLog(constants.kFirstTimeSetupComplete, LogLevel.Info)

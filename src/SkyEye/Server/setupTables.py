@@ -19,13 +19,13 @@ def iterateTables(user, password, callerContext, onTableExists, onTableDoesNotEx
 			* callerContext: Same as callerContext passed to iterateTables.
 			* subsystemName: Name of the subsystem.
 			* db: The database connection.
-			* schema: The schema.
+			* schema: The table schema.
 		* onTableDoesNotExist: Callback function, called when a table of the given name could not be found.
 		Should take four parameters:
 			* callerContext: Same as callerContext passed to iterateTables.
 			* subsystemName: Name of the subsystem.
 			* db: The database connection.
-			* schema: The schema.
+			* schema: The table schema.
 	Returns: True if all subsystems could be iterated, False otherwise.
 	Raises: InternalServiceError if we could not connect to the server for any reason.
 	'''
@@ -126,6 +126,10 @@ def VerifyTables(user, password):
 	return results
 
 def SetupTables(user, password):
-	"""Drops all existing tables and creates all tables specified in the schema.
+	"""Creates all tables specified in the schema.
+	Assumes that none of these tables already exists; otherwise you will get errors.
 	"""
-	return iterateTables(user, password, None, setupOnTableExists, setupOnTableDoesNotExist)
+	result = iterateTables(user, password, None, setupOnTableExists, setupOnTableDoesNotExist)
+	#Ideally, fill in the tables with default data afterwards.
+	pass
+	return result

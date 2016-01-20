@@ -32,7 +32,7 @@ def getCurrentUser():
 	elif sys.platform.startswith(genericStrings.kPlatformPrefixWindows):
 		result = win32api.GetUserNameEx(win32con.NameSamCompatible)
 	else:
-		raise exceptions.UnsupportedPlatformError(genericStrings.kErrUnsupportedPlatform)
+		raise exceptions.UnsupportedPlatformError()
 		result = constants.kInvalidUser
 	
 	return str(result)
@@ -50,7 +50,7 @@ def SetPassword(serviceName, password):
 	
 	keyring.set_password(serviceName, getCurrentUser(), password)
 
-def RequestPassword(pPrompt = constants.kDefaultPassPrompt):
+def PromptPassword(pPrompt = constants.kDefaultPassPrompt):
 	"""Requests the user to enter a password via standard input.
 	Returns: the password the user entered.
 	"""
