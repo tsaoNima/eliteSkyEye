@@ -34,7 +34,7 @@ class TestBase(object):
 														self.numTestsFailed)
 			resultLevel = LogLevel.Error
 			
-		self.logSystem.Log(constants.kFmtResultSummary.format(self.__name__, self.numTestsAttempted, resultText),
+		self.logSystem.Log(constants.kFmtResultSummary.format(self.__class__.__name__, self.numTestsAttempted, resultText),
 						resultLevel,
 						constants.kTagTesting,
 						constants.kMethodSummarizeResults)
@@ -50,7 +50,7 @@ class TestBase(object):
 		"""Runs all tests in this test module.
 		"""
 		self.reset()
-		self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__name__),
+		self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
 		try:
@@ -86,7 +86,7 @@ class TestBase(object):
 		"""
 		methodName = testMethod.__name__
 		#Mark that we're running a test.
-		self.logSystem.LogDebug(constants.kFmtTestStarted.format(methodName), constants.kTagTesting, where)
+		self.logSystem.LogInfo(constants.kFmtTestStarted.format(methodName), constants.kTagTesting, where)
 		self.numTestsAttempted += 1
 		
 		#If we failed...

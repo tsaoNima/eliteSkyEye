@@ -64,6 +64,8 @@ class DatabaseTests(TestBase):
 						))
 		if not self.dbConnection.CreateTable(testSchema):
 			return False
+		
+		return True
 	
 	def testCreateRelatedTable(self, testTableName, relatedTableName):
 		kMethod = "tests.testCreateRelatedTable()"
@@ -106,7 +108,9 @@ class DatabaseTests(TestBase):
 		kMethod = "tests.testTableOps()"
 		#Test creating a table.
 		testTableName = "test_table"
+		self.DoTest(self.testCreateTable, (testTableName,), kMethod)
 		
+		#Table existence...
 		self.DoTest(self.testTableExists, (testTableName,), kMethod)
 		
 		#Test describing a table.
