@@ -44,8 +44,18 @@ kMethodFirstTimeSetup = "Server.FirstTimeSetup()"
 
 kTagServer = "Server"
 
+kFmtExcDropDatabaseFailed = "Failed to drop database {0}"
+kFmtExcCreateDatabaseFailed = "Failed to create database {0}"
 kFmtErrDBConnectionFailed = "Couldn't connect to database {0}, aborting!"
+kWarnDroppingAllDatabases = "Dropping all databases!!!"
+kWarnEnteringServerSetup = "Entering server setup. All data will be lost!"
+kVerifyAllDatabasesStarting = "Verifying databases..."
+kFmtWarnAdminDBConnectionAttempted = "Connection attempted to system administration database by user {0}"
 
 kMethodIterateTables = "setupTables.iterateTables()"
 kMethodConnectToSubsystem = "setupTables.connectToSubsystem()"
+kMethodConnectToAdminDBAndRunOnAllSubsystems = "setupTables.connectToAdminDBAndRunOnAllSubsystems()"
+kMethodVerifyDatabases = "setupTables.VerifyDatabases()"
+kMethodDropDatabases = "setupTables.DropDatabases()"
+kMethodSetupDatabases = "setupTables.SetupDatabases()"
 kTagSetupTables = "SetupTables"

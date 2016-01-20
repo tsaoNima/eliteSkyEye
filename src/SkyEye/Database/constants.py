@@ -7,9 +7,11 @@ Created on Jan 16, 2016
 kDefaultDatabasePort = 5432
 
 #Method names...
+kMethodAbort = "Database.abort()"
 kMethodExecute = "Database.Execute()"
 kMethodExecuteOnTable = "Database.ExecuteOnTable()"
 kMethodConnect = "Database.Connect()"
+kMethodDisconnect = "Database.Disconnect()"
 kMethodTableExists = "Database.TableExists()"
 kMethodDescribeTable = "Database.DescribeTable()"
 kMethodDropTable = "Database.DropTable()"
@@ -26,7 +28,10 @@ kTagDatabase = "Database"
 kErrNotConnected = "Not connected to database, aborting"
 kFmtConnectionAttempted = "Connecting to {0}:{1} as {2}..."
 kFmtConnectionSucceeded = "Connection to {0}:{1} as {2} successful."
-kFmtErrConnectionFailed = "Connection failed with error: {0}"
+kFmtErrConnectionFailed = "Connection to {0}:{1} as {2} failed with error: {3}"
+kAbortingConnection = "Invalidating any existing connection."
+kFmtDisconnectStarted = "Disconnecting from {0}..."
+kFmtDisconnectComplete = "Disconnect from {0} complete."
 kFmtErrBadTableName = "Invalid table name {0} passed, aborting"
 kFmtWarnDroppingTable = "Drop requested! Dropping table {0}"
 kFmtErrDropTableFailed = "Table drop failed with error: {0}"

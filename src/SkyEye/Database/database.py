@@ -8,13 +8,14 @@ import constants
 from ..Logging import log
 from ..Logging.structs import LogLevel
 from ..Exceptions import exceptions
+from psycopg2.errorcodes import INVALID_PASSWORD
 
 sLog = log.GetLogInstance()
 
 class Database(object):
 	"""Represents a database connection.
 	"""
-	
+	dbName = ""
 	#PostgreSQL connection.
 	connection = None
 	#The cursor, the thing that you perform database operations on.
@@ -100,6 +101,10 @@ class Database(object):
 	
 	#Throws away all current database references.
 	def abort(self):
+		sLog.LogVerbose(constants.kAbortingConnection,
+					constants.kTagDatabase,
+					constants.kMethodAbort)
+		self.dbName = ""
 		self.cursor = None
 		self.connection = None
 		self.connected = False
@@ -135,6 +140,7 @@ class Database(object):
 			self.connection.autocommit = True
 			#Now get a cursor to start operations.
 			self.cursor = self.connection.cursor();
+			self.dbName = pDatabase
 			self.connected = True
 			sLog.LogDebug(constants.kFmtConnectionSucceeded.format(pDatabase, port, pUser),
 					constants.kTagDatabase,
@@ -144,13 +150,16 @@ class Database(object):
 			#Something bad happened.
 			newError = None
 			#Was it just a bad password?
-			if e.pgcode != psycopg2.errorcodes.INVALID_PASSWORD:
+			if e.pgcode == INVALID_PASSWORD:
 				#If so, report that.
 				newError = exceptions.PasswordInvalidError()
 			#Otherwise, pack into a larger error.
 			else:
 				newError = exceptions.InternalServiceError(str(e))
 			#Abort connection and bubble exception up.
+			sLog.LogError(constants.kFmtConnectionSucceeded.format(pDatabase, port, pUser),
+						constants.kTagDatabase,
+						constants.kMethodConnect)
 			self.Disconnect()
 			raise newError
 			return False
@@ -159,11 +168,16 @@ class Database(object):
 	def Disconnect(self):
 		"""Closes database connection.
 		"""
-		
+		sLog.LogVerbose(constants.kFmtDisconnectStarted.format(self.dbName),
+					constants.kTagDatabase,
+					constants.kMethodDisconnect)
 		if self.cursor is not None:
 			self.cursor.close()
 		if self.connection is not None:
 			self.connection.close()
+		sLog.LogVerbose(constants.kFmtDisconnectComplete.format(self.dbName),
+					constants.kTagDatabase,
+					constants.kMethodDisconnect)
 		self.abort()
 	
 	def TableExists(self, tableName):

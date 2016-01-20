@@ -38,7 +38,7 @@ def connectToSubsystemAndRun(subsystem, user, password, onSubsystem, onSubsystem
 	db = connectToSubsystem(dbName, user, password)
 	
 	#Iterate through the table schemas.
-	onSubsystem(subsystem[1], db, dbName *onSubsystemParameters)
+	onSubsystem(subsystem[1], db, dbName, *onSubsystemParameters)
 			
 	#Remember to disconnect from each system's DB!
 	db.Disconnect()
@@ -46,6 +46,15 @@ def connectToSubsystemAndRun(subsystem, user, password, onSubsystem, onSubsystem
 def connectToAllSubsystemsAndRun(user, password, onSubsystem, onSubsystemParameters=()):
 	for s in subSystems:
 		connectToSubsystemAndRun(s, user, password, onSubsystem, onSubsystemParameters)
+
+def connectToAdminDBAndRunOnAllSubsystems(user, password, onSubsystem, onSubsytemParameters=()):
+	sLog.LogWarning(constants.kFmtWarnAdminDBConnectionAttempted.format(user),
+				constants.kTagSetupTables,
+				constants.kMethodConnectToAdminDBAndRunOnAllSubsystems)
+	db = connectToSubsystem(constants.kSysAdminDatabaseName, user, password)
+	for s in subSystems:
+		onSubsystem(s[1], db, s[0], *onSubsytemParameters)
+	db.Disconnect()
 
 #For verification.
 def verifyOnTableExists(callerContext, subsystemName, db, schema):
@@ -134,9 +143,12 @@ def VerifyDatabases(user, password):
 		* PasswordInvalidError if the given password can't be used to login. 
 		* InternalServiceError if we could not connect to the database for any other reason.
 	"""
+	sLog.LogWarning(constants.kVerifyAllDatabasesStarting,
+				constants.kTagSetupTables,
+				constants.kMethodVerifyDatabases)
 	
 	#Ideally we should check schema version first.
-	raise NotImplementedError()
+	raise NotImplementedError("VerifyDatabases() not implemented!")
 	
 	#The list of things that failed verification.
 	results = []
@@ -148,11 +160,11 @@ def VerifyDatabases(user, password):
 	
 def dropSubsystemDatabase(subsystemSchemas, db, subsystemName):
 	if not db.DropDatabase(subsystemName):
-			raise exceptions.InternalServiceError("Failed to drop database {0}".format(subsystemName))
+			raise exceptions.InternalServiceError(constants.kFmtExcDropDatabaseFailed.format(subsystemName))
 
 def createSubsystemDatabase(subsystemSchemas, db, subsystemName):
 	if not db.CreateDatabase(subsystemName):
-			raise exceptions.InternalServiceError("Failed to create database {0}".format(subsystemName))
+			raise exceptions.InternalServiceError(constants.kFmtExcCreateDatabaseFailed.format(subsystemName))
 	
 def DropDatabases(user, password):
 	"""Drops all databases!
@@ -161,13 +173,17 @@ def DropDatabases(user, password):
 		* InternalServiceError if we could not connect to the database for any other reason,
 		or a table was not successfully dropped.
 	"""
-	connectToAllSubsystemsAndRun(user, password, dropSubsystemDatabase)
+	sLog.LogWarning(constants.kWarnDroppingAllDatabases, constants.kTagSetupTables, constants.kMethodDropDatabases)
+	connectToAdminDBAndRunOnAllSubsystems(user, password, dropSubsystemDatabase)
 		
 def SetupDatabases(user, password):
 	"""Drops all databases,
 	then creates them again as specified in the schema.
 	All data will be lost!
 	"""
+	sLog.LogWarning(constants.kWarnEnteringServerSetup,
+				constants.kTagSetupTables,
+				constants.kMethodSetupDatabases)
 	
 	#Would be nice to back up the data first, but one step at a time.
 	pass
@@ -179,7 +195,7 @@ def SetupDatabases(user, password):
 	DropDatabases(user, password)
 	
 	#Create the databases first.
-	connectToAllSubsystemsAndRun(user, password, createSubsystemDatabase)
+	connectToAdminDBAndRunOnAllSubsystems(user, password, createSubsystemDatabase)
 	
 	#Now setup the databases.
 	for s in subSystems:
