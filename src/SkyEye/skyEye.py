@@ -9,11 +9,6 @@ from Exceptions import exceptions
 from Logging import consoleListener
 
 class SkyEyeDaemon(object):
-	batchMode = False
-	mLog = None
-	server = None
-	settings = None
-	
 	def loadSettings(self):
 		settingsLoaded = False
 		settingsYAML = None

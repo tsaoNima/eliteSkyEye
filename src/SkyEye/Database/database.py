@@ -15,13 +15,7 @@ sLog = log.GetLogInstance()
 class Database(object):
 	"""Represents a database connection.
 	"""
-	dbName = ""
-	#PostgreSQL connection.
-	connection = None
-	#The cursor, the thing that you perform database operations on.
-	cursor = None
-	connected = False
-	
+
 	def execute(self, callerName, query, queryParams, failMsg, failMsgParams = ()):
 		"""
 		Returns True if query was successful, False otherwise.
@@ -31,6 +25,7 @@ class Database(object):
 			sLog.LogVerbose(constants.kErrNotConnected, constants.kTagDatabase, constants.kMethodExecute)
 			return False
 		try:
+			sLog.LogVerbose(constants.kFmtQueryAttempted.format(query), constants.kTagDatabase, constants.kMethodExecute)
 			self.cursor.execute(query,
 						queryParams)
 		except psycopg2.Error as e:
@@ -39,6 +34,7 @@ class Database(object):
 			self.connection.rollback()
 			return False
 		self.connection.commit()
+		sLog.LogVerbose(constants.kQueryExecuted, constants.kTagDatabase, constants.kMethodExecute)
 		return True
 	
 	def executeOnTable(self, callerName, tableName, query, queryParams, failMsg, failMsgParams = ()):
@@ -105,7 +101,9 @@ class Database(object):
 					constants.kTagDatabase,
 					constants.kMethodAbort)
 		self.dbName = ""
+		#The cursor, the thing that you perform database operations on.
 		self.cursor = None
+		#PostgreSQL connection.
 		self.connection = None
 		self.connected = False
 	
@@ -157,7 +155,7 @@ class Database(object):
 			else:
 				newError = exceptions.InternalServiceError(str(e))
 			#Abort connection and bubble exception up.
-			sLog.LogError(constants.kFmtConnectionSucceeded.format(pDatabase, port, pUser),
+			sLog.LogError(constants.kFmtErrConnectionFailed.format(pDatabase, port, pUser, e),
 						constants.kTagDatabase,
 						constants.kMethodConnect)
 			self.Disconnect()

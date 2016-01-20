@@ -9,9 +9,6 @@ kElementMissing = 0x01
 kElementDoesNotMatchSpec = 0x02
 
 class VerifyProblem(object):
-	problemCode = 0
-	problemString = ""
-	
 	def __init__(self, pProblemCode, pProblemString):
 		self.problemCode = pProblemCode
 		self.problemString = pProblemString

@@ -26,6 +26,8 @@ kTagDatabase = "Database"
 
 #Log strings...
 kErrNotConnected = "Not connected to database, aborting"
+kFmtQueryAttempted = "Query requested: {0}"
+kQueryExecuted = "Query executed."
 kFmtConnectionAttempted = "Connecting to {0}:{1} as {2}..."
 kFmtConnectionSucceeded = "Connection to {0}:{1} as {2} successful."
 kFmtErrConnectionFailed = "Connection to {0}:{1} as {2} failed with error: {3}"

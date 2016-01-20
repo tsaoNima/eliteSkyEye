@@ -11,10 +11,6 @@ from SkyEye.Logging.structs import LogLevel
 from SkyEye.Exceptions.exceptions import TestFailedError
 
 class TestBase(object):
-	logSystem = None
-	numTestsAttempted = 0
-	numTestsFailed = 0
-	
 	def reset(self):
 		self.numTestsAttempted = 0
 		self.numTestsFailed = 0

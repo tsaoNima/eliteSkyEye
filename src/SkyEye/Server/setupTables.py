@@ -36,14 +36,16 @@ def connectToSubsystemAndRun(subsystem, user, password, onSubsystem, onSubsystem
 	dbName = subsystem[0]
 	#Log in to that subsystem's database.
 	db = connectToSubsystem(dbName, user, password)
-	
+	subsystemSchemas = vars(subsystem[1])
 	#Iterate through the table schemas.
-	onSubsystem(subsystem[1], db, dbName, *onSubsystemParameters)
+	sLog.LogVerbose(("Connect to subsystem ", dbName, " and run with schemas ", subsystemSchemas))
+	onSubsystem(subsystemSchemas, db, dbName, *onSubsystemParameters)
 			
 	#Remember to disconnect from each system's DB!
 	db.Disconnect()
 	
 def connectToAllSubsystemsAndRun(user, password, onSubsystem, onSubsystemParameters=()):
+	sLog.LogVerbose(("Connect and run with subsystems: ", subSystems))
 	for s in subSystems:
 		connectToSubsystemAndRun(s, user, password, onSubsystem, onSubsystemParameters)
 
@@ -52,8 +54,15 @@ def connectToAdminDBAndRunOnAllSubsystems(user, password, onSubsystem, onSubsyte
 				constants.kTagSetupTables,
 				constants.kMethodConnectToAdminDBAndRunOnAllSubsystems)
 	db = connectToSubsystem(constants.kSysAdminDatabaseName, user, password)
+	sLog.LogVerbose(("Connect to ADMIN and run with subsystems: ", subSystems))
 	for s in subSystems:
-		onSubsystem(s[1], db, s[0], *onSubsytemParameters)
+		subsystemName = s[0]
+		subsystemSchemas = vars(s[1])
+		sLog.LogVerbose(("Connect to ADMIN and run on subsystem " ,
+						subsystemName,
+						" with schemas ",
+						subsystemSchemas))
+		onSubsystem(subsystemSchemas, db, subsystemName, *onSubsytemParameters)
 	db.Disconnect()
 
 #For verification.
@@ -111,6 +120,9 @@ def DropTablesForDatabase(user, password, subsystem):
 		* InternalServiceError if we could not connect to the database for any other reason,
 		or a table was not successfully dropped.
 	"""
+	sLog.LogWarning(constants.kFmtWarnDroppingTablesForDatabase.format(subsystem),
+				constants.kTagSetupTables,
+				constants.kMethodDropTablesForDatabase)
 	connectToSubsystemAndRun(subsystem, user, password, dropSubsystemTables)
 
 def SetupTablesForDatabase(user, password, subsystem):
@@ -119,6 +131,9 @@ def SetupTablesForDatabase(user, password, subsystem):
 		* InternalServiceError if we could not connect to the database for any other reason,
 		or a table was not successfully dropped.
 	"""
+	sLog.LogDebug(constants.kFmtCreatingTablesForDatabase.format(subsystem),
+				constants.kTagSetupTables,
+				constants.kMethodSetupTablesForDatabase)
 	connectToSubsystemAndRun(subsystem, user, password, setupSubsystemTables)
 
 def VerifyTablesForDatabase(user, password, subsystem):
@@ -127,6 +142,9 @@ def VerifyTablesForDatabase(user, password, subsystem):
 		* InternalServiceError if we could not connect to the database for any other reason,
 		or a table was not successfully dropped.
 	"""
+	sLog.LogDebug(constants.kFmtVerifyingTablesForDatabase.format(subsystem),
+				constants.kTagSetupTables,
+				constants.kMethodVerifyTablesForDatabase)
 	results = []
 	connectToSubsystemAndRun(subsystem, user, password, verifySubsystemTables, (results,))
 	return results
@@ -198,6 +216,9 @@ def SetupDatabases(user, password):
 	connectToAdminDBAndRunOnAllSubsystems(user, password, createSubsystemDatabase)
 	
 	#Now setup the databases.
+	sLog.LogDebug(constants.kCreateTablesStarting,
+				constants.kTagSetupTables,
+				constants.kMethodSetupDatabases)
 	for s in subSystems:
 		SetupTablesForDatabase(user, password, s)
 		

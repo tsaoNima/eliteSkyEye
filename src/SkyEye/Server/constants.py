@@ -5,8 +5,8 @@ Created on Jan 19, 2016
 '''
 kSchemaNameLenMax = 255
 
-kGDWDatabaseName = "GeoDataWarehouse"
-kRDADatabaseName = "ReconDataAnalyzer"
+kGDWDatabaseName = "geo_data_warehouse"
+kRDADatabaseName = "recon_data_analyzer"
 kSubsystemNames = (kGDWDatabaseName, kRDADatabaseName)
 kServerDBAdminName = "sky_eye_admin"
 
@@ -48,13 +48,20 @@ kFmtExcDropDatabaseFailed = "Failed to drop database {0}"
 kFmtExcCreateDatabaseFailed = "Failed to create database {0}"
 kFmtErrDBConnectionFailed = "Couldn't connect to database {0}, aborting!"
 kWarnDroppingAllDatabases = "Dropping all databases!!!"
+kFmtWarnDroppingTablesForDatabase = "Dropping all tables in database {0}!"
 kWarnEnteringServerSetup = "Entering server setup. All data will be lost!"
+kCreateTablesStarting = "Generating all database tables..."
+kFmtCreatingTablesForDatabase = "Generating tables for database {0}..."
 kVerifyAllDatabasesStarting = "Verifying databases..."
+kFmtVerifyingTablesForDatabase = "Verifying tables for database {0}..."
 kFmtWarnAdminDBConnectionAttempted = "Connection attempted to system administration database by user {0}"
 
 kMethodIterateTables = "setupTables.iterateTables()"
 kMethodConnectToSubsystem = "setupTables.connectToSubsystem()"
 kMethodConnectToAdminDBAndRunOnAllSubsystems = "setupTables.connectToAdminDBAndRunOnAllSubsystems()"
+kMethodVerifyTablesForDatabase = "setupTables.VerifyTablesForDatabase()"
+kMethodDropTablesForDatabase = "setupTables.DropTablesForDatabase()"
+kMethodSetupTablesForDatabase = "setupTables.SetupTablesForDatabase()"
 kMethodVerifyDatabases = "setupTables.VerifyDatabases()"
 kMethodDropDatabases = "setupTables.DropDatabases()"
 kMethodSetupDatabases = "setupTables.SetupDatabases()"

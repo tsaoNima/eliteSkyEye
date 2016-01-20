@@ -8,16 +8,7 @@ import pytz
 
 sLogInstance = None
 
-class Log(object):
-	#Contains individual log elements.
-	#Format is 
-	logBuffer = []
-	bufferHead = -1
-	#Output modules that are interested in the log messages.
-	subscribers = None
-	#The file to write the log out to, if any.
-	outFile = None
-	
+class Log(object):	
 	def getTimeStamp(self):
 		result = datetime.now(tz = pytz.utc)
 		return result
@@ -68,14 +59,20 @@ class Log(object):
 	
 	
 	def __init__(self, outPath=None):
+		#Contains individual log elements.
 		self.logBuffer = []
 		#Preallocate buffer space because I don't want to use append() later.
 		for i in xrange(constants.kLogBufferMaxLines):
 			emptyMsg = LogElem(self.getTimeStamp(), "", LogLevel.Verbose, constants.kTagEmpty, constants.kWhereUnknown)
 			self.logBuffer.append(emptyMsg)
+		
 		self.bufferHead = -1
 		
+		#Output modules that are interested in the log messages.
 		self.subscribers = []
+		#The file to write the log out to, if any.
+		self.outFile = None
+		
 		self.debugLog(constants.kLogInitComplete)
 		self.SetLogFile(outPath)
 	

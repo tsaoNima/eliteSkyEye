@@ -9,32 +9,29 @@ from structs import LogLevel
 Abstract class for objects that print output from the logger.
 '''
 class ListenerBase(object):
-	mLogLevel = LogLevel.Info
-	mTags = []
-	
 	def __init__(self):
-		self.mLogLevel = LogLevel.Info
-		self.mTags = []
+		self.logLevel = LogLevel.Info
+		self.tags = []
 	
 	def PrintMessage(self, message):
 		raise NotImplementedError("Listeners must implement PrintMessage()!")
 	
 	def LogLevel(self):
-		return self.mLogLevel
+		return self.logLevel
 	
 	def SetLogLevel(self, pLogLevel):
-		self.mLogLevel = pLogLevel
+		self.logLevel = pLogLevel
 	
 	def Tags(self):
-		return self.mTags
+		return self.tags
 	
 	def AddTag(self, pTag):
-		if pTag not in self.mTags:
-			self.mTags.append(pTag)
+		if pTag not in self.tags:
+			self.tags.append(pTag)
 	
 	def RemoveTag(self, pTag):
-		if pTag in self.mTags:
-			self.mTags.remove(pTag)
+		if pTag in self.tags:
+			self.tags.remove(pTag)
 	
 	def ClearTags(self):
-		self.mTags = []
+		self.tags = []

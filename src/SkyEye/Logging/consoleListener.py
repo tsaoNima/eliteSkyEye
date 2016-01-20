@@ -21,10 +21,7 @@ sFormatMap = {
 '''
 Prints log info to standard output.
 '''
-class ConsoleListener(ListenerBase):
-	mLogLevel = LogLevel.Info
-	mTags = []
-	
+class ConsoleListener(ListenerBase):	
 	def __init__(self, pLogLevel=LogLevel.Info, pTags=[]):
 		super(ConsoleListener, self).__init__()
 		#Start Colorama.

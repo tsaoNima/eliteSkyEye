@@ -20,12 +20,6 @@ sLog = log.GetLogInstance()
 Represents the server connection.
 '''
 class Server(object):
-	#Database connections for subsystems.
-	gdwDatabase = None
-	rdaDatabase = None
-	batchMode = True
-	loggedIn = False
-	
 	def getPassword(self):
 		"""Gets the password for the server admin.
 		Returns: The password for the server admin if it is set, None otherwise.
@@ -111,7 +105,7 @@ class Server(object):
 				return False
 			else:
 				credentialsValid = False
-				for i in xrange(constants.kMaxNumPrompts):
+				for i in xrange(constants.kMaxNumPrompts):  # @UnusedVariable
 					#Request new credentials.
 					if not self.requestNewCredentials():
 						sLog.LogError(constants.kErrCredentialRequestFailed,
@@ -168,9 +162,12 @@ class Server(object):
 		self.setupLog(constants.kFirstTimeSetupDBAdminCreated, LogLevel.Debug)
 	
 	def __init__(self, pBatchMode = True):
+		#Database connections for subsystems.
 		self.gdwDatabase = Database()
 		self.rdaDatabase = Database()
+		#If true, server should not accept standard input.
 		self.batchMode = True
+		#If true, server is connected to all internal services.
 		self.loggedIn = False
 	
 	def Login(self):
