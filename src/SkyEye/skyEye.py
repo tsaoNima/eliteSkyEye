@@ -165,14 +165,14 @@ class SkyEyeDaemon(object):
 	def shutdownVerboseLog(self, message):
 		self.mLog.LogVerbose(message, constants.kTagSkyEye, constants.kMethodShutdown)
 	
-	def __init__(self, logPath=None, pBatchMode=False):
+	def __init__(self, logPath=None, logLevel=LogLevel.Debug, pBatchMode=False):
 		"""Class initializer.
 		Raises:
 			* InternalServiceError if server login failed.
 		"""
 		
 		self.initFields(pBatchMode)
-		self.initLog(logPath)
+		self.initLog(logPath, logLevel)
 		
 		#Try to load settings.
 		self.initVerboseLog(constants.kInitSettings)
