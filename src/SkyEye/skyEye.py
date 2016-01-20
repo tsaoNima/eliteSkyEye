@@ -123,13 +123,16 @@ class SkyEyeDaemon(object):
 		isFirstBoot = self.settings[constants.kSettingsFirstRun]
 		if isFirstBoot:
 			#If so, enter setup.
+			self.initVerboseLog(constants.kInitFirstBoot)
 			self.firstRunSetup()
 		
 		#Open server connection.
+		self.initVerboseLog(constants.kInitServerLogin)
 		if not self.server.Login():
 			raise exceptions.InternalServiceError(constants.kErrLoginFailed) #TODO: add detail
 		
 		#Verify that tables match our expected schema.
+		self.initVerboseLog(constants.kInitVerifyServer)
 		self.verifyServer()
 	
 	def initIO(self):
