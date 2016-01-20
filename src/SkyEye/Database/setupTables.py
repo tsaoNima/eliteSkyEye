@@ -3,13 +3,11 @@ Created on Jan 15, 2016
 
 @author: Me
 '''
-import sys
 import schemas
 import constants
 import database
+import verifyProblem
 from ..Logging import log
-from ..Constants import stringConstants
-from ..Constants import verifyConstants
 
 sLog = log.GetLogInstance()
 
@@ -43,7 +41,9 @@ def iterateTables(user, password, callerContext, onTableExists, onTableDoesNotEx
 		db = database.Database()
 		#If login failed, abort.
 		if not db.Connect(dbName, user, password):
-			sLog.LogError("iterateTables(): Couldn't connect to database {0}, aborting!".format(dbName), "SetupTables")
+			sLog.LogError("Couldn't connect to database {0}, aborting!".format(dbName),
+						"SetupTables",
+						"setupTables.iterateTables()")
 			return False
 		#Iterate through the table schemas.
 		for schema in vars(s):
@@ -74,7 +74,7 @@ def verifyOnTableExists(callerContext, subsystemName, db, schema):
 
 def verifyOnTableDoesNotExist(callerContext, subsystemName, db, schema):
 	#Add to error list.
-	problem = (subsystemName, schema.schemaName, verifyConstants.TableMissing(schema.schemaName))
+	problem = (subsystemName, schema.schemaName, verifyProblem.TableMissing(schema.schemaName))
 	callerContext.append(problem)
 
 def VerifyTables(user, password):

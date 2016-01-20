@@ -14,6 +14,6 @@ setup(
 	license = "MIT Who Cares License",
 	long_description = open("readme.txt").read(), 
 	scripts = ["SkyEye/skyEye.py", "SkyEye/testAll.py", "SkyEye/setupTables.py"],
-	install_requires = ["psycopg2", "enum34", "colorama", "pytz", "keyring"],
+	install_requires = ["psycopg2", "enum34", "colorama", "pytz", "keyring", "pypiwin32"],
 	zip_safe = False
 	)

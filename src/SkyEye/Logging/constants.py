@@ -14,12 +14,19 @@ kTagAll = "*"
 #This message is untagged.
 kTagEmpty = ""
 
+#Sender didn't specify where in the program this message was sent.
+kWhereUnknown = "(unknown function)"
+
 #Log file constants.
-#0: Time the message was logged.
-#1: Log level.
-#2: Tag.
-#3: Message.
-kLogFileLine = "[{0}] {1}({2}): {3}"
+kFmtLogFileLine = "[{0}] {1}@{2}({3}): {4}"
+"""Format line used for writing to a log file. Parameters:
+0: Time the message was logged.
+1: Log level.
+2: Where the message was sent from.
+3: Tag.
+4: Message.
+"""
+
 kLogLevelNames = {
 				LogLevel.Verbose : "V",
 				LogLevel.Debug : "D",
@@ -27,11 +34,14 @@ kLogLevelNames = {
 				LogLevel.Warning : "W",
 				LogLevel.Error : "E"
 				}
-#Console listener line.
-#0: Time the message was logged.
-#1: Tag.
-#2: Message.
-kStdOutLine = "[{0}] ({1}): {2}"
+
+kFmtStdOutLine = "[{0}] @{1}({2}): {3}"
+"""Format line used for writing to a console listener. Parameters:
+0: Time the message was logged.
+1: Where the message was sent from.
+2: Tag.
+3: Message.
+"""
 
 #Stdout constants.
 kStrNone = "(none)"

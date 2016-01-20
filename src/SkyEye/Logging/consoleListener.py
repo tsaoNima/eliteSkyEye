@@ -38,4 +38,6 @@ class ConsoleListener(ListenerBase):
 		#Color depends on severity.
 		textColor = sFormatMap[message.logLevel] + Style.BRIGHT
 		#Print the message and then print a newline.
-		print textColor + constants.kStdOutLine.format(message.dateTime, message.tag, message.message) + Style.RESET_ALL
+		print (textColor +
+		constants.kFmtStdOutLine.format(message.dateTime, message.where, message.tag, message.message) +
+		Style.RESET_ALL)

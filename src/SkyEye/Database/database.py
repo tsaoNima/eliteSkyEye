@@ -7,7 +7,6 @@ import psycopg2
 import constants
 from ..Logging import log
 from ..Logging.structs import LogLevel
-from ..Constants import stringConstants
 
 sLog = log.GetLogInstance()
 
@@ -23,28 +22,28 @@ class Database(object):
 	
 	#Returns True if query was successful, False otherwise.
 	#failMsg should be a format string where the last parameter is the error string.
-	def execute(self, query, queryParams, failMsg, failMsgParams = ()):
+	def execute(self, callerName, query, queryParams, failMsg, failMsgParams = ()):
 		if not self.connected:
-			sLog.Log(constants.kFmtErrNotConnected.format(constants.kMethodExecute), LogLevel.Verbose)
+			sLog.LogVerbose(constants.kErrNotConnected, constants.kTagDatabase, constants.kMethodExecute)
 			return False
 		try:
 			self.cursor.execute(query,
 						queryParams)
 		except psycopg2.Error as e:
 			allParams = failMsgParams + (e,)
-			sLog.Log(failMsg.format(*allParams), LogLevel.Error)
+			sLog.LogError(failMsg.format(*allParams), constants.kTagDatabase, callerName)
 			self.connection.rollback()
 			return False
 		self.connection.commit()
 		return True
 	
-	def executeOnTable(self, tableName, invalidTableMsg, query, queryParams, failMsg, failMsgParams = ()):
+	def executeOnTable(self, callerName, tableName, query, queryParams, failMsg, failMsgParams = ()):
 		#Sanity check.
 		if not tableName:
-			sLog.Log(invalidTableMsg, LogLevel.Warning)
+			sLog.LogWarning(constants.kFmtErrBadTableName.format(tableName), constants.kTagDatabase, constants.kMethodExecuteOnTable)
 			return False
 		
-		return self.execute(query, queryParams, failMsg, failMsgParams)
+		return self.execute(callerName, query, queryParams, failMsg, failMsgParams)
 	
 	def buildConstraintString(self, constraint):
 		result = ""
@@ -109,6 +108,9 @@ class Database(object):
 		#Initialize values to defaults.
 		self.abort()
 	
+	def IsConnected(self):
+		return self.connected
+	
 	'''
 	Attempts to connect to the requested database
 	on this machine.
@@ -116,8 +118,9 @@ class Database(object):
 	'''
 	def Connect(self, pDatabase, pUser, pPassword):
 		port = constants.kDefaultDatabasePort
-		sLog.Log(constants.kFmtConnectionAttempted.format(constants.kMethodConnect, pDatabase, port, pUser),
-				LogLevel.Debug)
+		sLog.LogDebug(constants.kFmtConnectionAttempted.format(pDatabase, port, pUser),
+				constants.kTagDatabase,
+				constants.kMethodConnect)
 		try:
 			#Open the connection.
 			#We probably want an autocommit connection, no point being explicit.
@@ -127,12 +130,15 @@ class Database(object):
 			#Now get a cursor to start operations.
 			self.cursor = self.connection.cursor();
 			self.connected = True
-			sLog.Log(constants.kFmtConnectionSucceeded.format(constants.kMethodConnect, pDatabase, port, pUser),
-					LogLevel.Debug)
+			sLog.LogDebug(constants.kFmtConnectionSucceeded.format(pDatabase, port, pUser),
+					constants.kTagDatabase,
+					constants.kMethodConnect)
 			return True
 		except psycopg2.Error as e:
 			#Something bad happened.
-			sLog.Log(constants.kFmtErrConnectionFailed.format(constants.kMethodConnect, e), LogLevel.Error)
+			sLog.LogError(constants.kFmtErrConnectionFailed.format(e),
+						constants.kTagDatabase,
+						constants.kMethodConnect)
 			self.Close()
 			return False
 		
@@ -151,12 +157,11 @@ class Database(object):
 	False otherwise.
 	'''
 	def TableExists(self, tableName):
-		if self.executeOnTable(tableName,
-							constants.kFmtErrBadTableName.format(constants.kMethodTableExists),
+		if self.executeOnTable(constants.kMethodTableExists,
+							tableName,
 							constants.kQueryCheckTableExists,
 							(tableName,),
-							constants.kFmtErrTableExistsFailed,
-							(constants.kMethodTableExists,)):
+							constants.kFmtErrTableExistsFailed):
 			return self.cursor.fetchone()[0]
 		return False
 	
@@ -166,8 +171,8 @@ class Database(object):
 	or an empty tuple if the table could not be found for any reason.
 	'''
 	def DescribeTable(self, tableName):
-		if self.executeOnTable(tableName,
-							constants.kFmtErrBadTableName.format(constants.kMethodDescribeTable),
+		if self.executeOnTable(constants.kMethodDescribeTable,
+							tableName,
 							constants.kQueryDescribeTable,
 							(tableName,),
 							constants.kFmtErrDescribeTableFailed):
@@ -180,14 +185,14 @@ class Database(object):
 	'''
 	def DropTable(self, tableName):
 		queryStr = constants.kQueryDropTable.format(tableName)
-		sLog.LogWarning(constants.kFmtWarnDroppingTable.format(constants.kMethodDropTable, tableName),
-					constants.kTagDatabase)
-		return self.executeOnTable(tableName,
-							constants.kFmtErrBadTableName.format(constants.kMethodDropTable),
-							queryStr,
-							(),
-							constants.kFmtErrDropTableFailed,
-							(constants.kMethodDropTable,))
+		sLog.LogWarning(constants.kFmtWarnDroppingTable.format(tableName),
+					constants.kTagDatabase,
+					constants.kMethodDropTable)
+		return self.executeOnTable(constants.kMethodDropTable,
+								tableName,
+								queryStr,
+								(),
+								constants.kFmtErrDropTableFailed)
 		
 	'''
 	Attempts to create the requested table with the given schema.
@@ -196,7 +201,7 @@ class Database(object):
 	def CreateTable(self, schema):
 		#Sanity check.
 		if not schema.schemaName:
-			sLog.Log(constants.kFmtErrBadTableName.format(constants.kMethodCreateTable), LogLevel.Warning)
+			sLog.LogWarning(constants.kFmtErrBadTableName.format(schema.schemaName), constants.kTagDatabase, constants.kMethodCreateTable)
 			return
 		
 		#Build the CREATE TABLE string.
@@ -204,9 +209,10 @@ class Database(object):
 		
 		#Do our query!
 		createString = constants.kFmtQueryCreateTable.format(schema.schemaName, columns)
-		sLog.LogDebug(constants.kFmtCreatingTable.format(constants.kMethodCreateTable, createString),
-					constants.kTagDatabase)
-		return self.execute(createString,
-					(),
-					constants.kFmtErrCreateTableFailed,
-					(constants.kMethodCreateTable,))
+		sLog.LogDebug(constants.kFmtCreatingTable.format(createString),
+					constants.kTagDatabase,
+					constants.kMethodCreateTable)
+		return self.execute(constants.kMethodCreateTable,
+						createString,
+						(),
+						constants.kFmtErrCreateTableFailed)

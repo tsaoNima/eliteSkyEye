@@ -17,7 +17,7 @@ def main():
 	stdOut = ConsoleListener()
 	mLog.Attach(stdOut)
 	
-	mLog.LogDebug("Testing database...")
+	mLog.LogDebug("Testing database...", where="testAll.main()")
 	Database.tests.TestAll(mLog)
 	
 	#Shutdown the logger.

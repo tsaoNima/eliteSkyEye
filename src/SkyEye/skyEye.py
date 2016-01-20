@@ -1,8 +1,8 @@
 import sys
 import server
+import constants
 from Logging.structs import LogLevel
 from Logging import log
-from Constants import stringConstants
 
 class SkyEyeDaemon(object):
 	batchMode = False
@@ -31,11 +31,11 @@ class SkyEyeDaemon(object):
 		self.server = server.Server(self.batchMode)
 		#Open the log file!
 		if logPath is None:
-			logPath = stringConstants.kSkyEyeDefaultOutPath
+			logPath = constants.kSkyEyeDefaultOutPath
 		try:
 			self.mLog.SetLogFile(logPath)
 		except:
-			self.mLog.Log(stringConstants.kFmtErrSkyEyeLogOpenFailed.format(logPath), LogLevel.Error)
+			self.mLog.LogError(constants.kFmtErrSkyEyeLogOpenFailed.format(logPath), where="SkyEyeDaemon.__init__()")
 		
 		#Try to load settings.
 		self.loadSettings()
@@ -79,15 +79,15 @@ class SkyEyeDaemon(object):
 def main():
 	skyEye = None
 	#TODO: switch these on console parameters.
-	outPath = stringConstants.kSkyEyeDefaultOutPath
+	outPath = constants.kSkyEyeDefaultOutPath
 	batchMode = False
 	
 	#Do startup.
 	try:
 		skyEye = SkyEyeDaemon(outPath, batchMode)
 	except:
-		print stringConstants.kErrSkyEyeInitFailed
-		print stringConstants.kFmtReason.format(sys.exc_info()[0])
+		print constants.kErrSkyEyeInitFailed
+		print constants.kFmtReason.format(sys.exc_info()[0])
 		return
 	
 	#Now start listening for events.

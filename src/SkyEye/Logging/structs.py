@@ -27,4 +27,4 @@ class LogLevel:
 
 #Describes one entry in the log buffer.
 #TODO: should add timestamp.
-LogElem = namedtuple("LogElem", "dateTime message logLevel tag")
+LogElem = namedtuple("LogElem", "dateTime message logLevel tag where")

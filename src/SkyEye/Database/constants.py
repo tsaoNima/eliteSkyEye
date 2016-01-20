@@ -6,12 +6,13 @@ Created on Jan 16, 2016
 
 kSchemaNameLenMax = 255
 kDefaultDatabasePort = 5432
-
-kGDWDatabaseName = "GeoDataWarehouse"
-kRDADatabaseName = "ReconDataAnalyzer"
+ 
+kSysAdminDatabaseName = "postgres"
+kSysAdminUserName = "postgres"
 
 #Method names...
 kMethodExecute = "Database.execute()"
+kMethodExecuteOnTable = "Database.executeOnTable()"
 kMethodConnect = "Database.connect()"
 kMethodTableExists = "Database.tableExists()"
 kMethodDescribeTable = "Database.describeTable()"
@@ -24,20 +25,17 @@ kMethodVerifyRDA = "Database.verifyRDA()"
 kTagDatabase = "Database"
 
 #Log strings...
-kFmtErrNotConnected = "{0}: Not connected to database, aborting"
-kFmtConnectionAttempted = "{0}: Connecting to {1}:{2} as {3}..."
-kFmtConnectionSucceeded = "{0}: Connection to {1}:{2} as {3} successful."
-kFmtErrConnectionFailed = "{0}: Connection failed with error: {1}"
-kFmtErrBadTableName = "{0}: invalid table name passed, aborting"
-kFmtWarnDroppingTable = "{0}: Drop requested! Dropping table {1}"
-kFmtErrDropTableFailed = "{0}: Table drop failed with error: {1}"
-kFmtCreatingTable = "{0}: Table creation requested.\nCreate string: \"{1}\""
-kFmtErrCreateTableFailed = "{0}: Table create failed with error: {1}"
-kFmtErrTableExistsFailed = "{0}: Table existence check failed with error: {1}"
-kFmtErrDescribeTableFailed = "Database.describeTable(): Table description failed with error: {0}"
-kFmtWarnVerificationFailed = "Database.verifyAll(): {0} failed verification!"
-kVerificationAllPassed = "Database.verifyAll(): All modules passed verification."
-kFmtWarnSchemaFailed = "{0}: Schema {1} failed verification!"
+kErrNotConnected = "Not connected to database, aborting"
+kFmtConnectionAttempted = "Connecting to {0}:{1} as {2}..."
+kFmtConnectionSucceeded = "Connection to {0}:{1} as {2} successful."
+kFmtErrConnectionFailed = "Connection failed with error: {0}"
+kFmtErrBadTableName = "Invalid table name {0} passed, aborting"
+kFmtWarnDroppingTable = "Drop requested! Dropping table {0}"
+kFmtErrDropTableFailed = "Table drop failed with error: {0}"
+kFmtCreatingTable = "Table creation requested.\nCreate string: \"{0}\""
+kFmtErrCreateTableFailed = "Table create failed with error: {0}"
+kFmtErrTableExistsFailed = "Table existence check failed with error: {1}"
+kFmtErrDescribeTableFailed = "Table description failed with error: {0}"
 
 #Queries...
 #Describes the requested table.
