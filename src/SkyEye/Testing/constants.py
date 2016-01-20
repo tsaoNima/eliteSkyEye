@@ -18,4 +18,4 @@ kFmtResultSummary = "{0}: {1} tests run, {2}"
 
 kFmtTestStarted = "Testing {0}..."
 kFmtTestFailed = "{0} failed!"
-kFmtTestUnhandledFailure = "{0} failed due to unhandled exception!\nException:{1}\nDetails:{2}"
+kFmtTestUnhandledFailure = "{0} failed due to unhandled exception!\nException: {1}\nDetails: {2}"
