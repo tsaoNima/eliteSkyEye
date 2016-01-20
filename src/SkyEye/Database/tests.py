@@ -4,7 +4,6 @@ Created on Jan 18, 2016
 @author: Me
 '''
 import database
-import constants
 from ..Logging import log
 from ..Logging.structs import LogLevel
 from ..Logging import consoleListener

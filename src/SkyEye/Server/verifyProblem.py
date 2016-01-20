@@ -25,19 +25,19 @@ class VerifyProblem(object):
 class TableMissing(VerifyProblem):
 	def __init__(self, tableName):
 		pCode = kTableProblem | kElementMissing
-		pString = "Table {0} doesn't exist".format(tableName)
+		pString = "Table {0} doesn't exist.".format(tableName)
 		super(TableMissing, self).__init__(pCode, pString)
 
 class TableSchemaMismatch(VerifyProblem):
 	def __init__(self, tableName):
 		pCode = kTableProblem | kElementDoesNotMatchSpec
-		pString = "Table {0}'s schema doesn't match SkyEye's expected schema".format(tableName)
+		pString = "Table {0}'s schema doesn't match SkyEye's expected schema.".format(tableName)
 		super(TableSchemaMismatch, self).__init__(pCode, pString)
 
 class ColumnMissing(VerifyProblem):
 	def __init__(self, tableName, columnName):
 		pCode = kColumnProblem | kElementMissing
-		pString = "Column {0} of table {1} does not exist".format(columnName, tableName)
+		pString = "Column {0} of table {1} doesn't exist.".format(columnName, tableName)
 		super(ColumnMissing, self).__init__(pCode, pString)
 
 class ColumnSchemaMismatch(VerifyProblem):
