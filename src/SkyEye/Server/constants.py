@@ -3,6 +3,8 @@ Created on Jan 19, 2016
 
 @author: Me
 '''
+kSchemaNameLenMax = 255
+
 kGDWDatabaseName = "GeoDataWarehouse"
 kRDADatabaseName = "ReconDataAnalyzer"
 kSubsystemNames = (kGDWDatabaseName, kRDADatabaseName)

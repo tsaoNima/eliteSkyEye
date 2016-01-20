@@ -11,6 +11,7 @@ from ..Logging import consoleListener
 from SkyEye.Server.schemas import Types
 from SkyEye.Server.schemas import Modifiers
 from SkyEye.Server.schemas import Schema
+import SkyEye.Server.constants
 
 def TestAll(pLog):
 	kMethodTestAll = "tests.TestAll()"
@@ -32,7 +33,7 @@ def TestAll(pLog):
 	pLog.LogDebug("Testing CreateTable()...", where=kMethodTestAll)
 	testSchema = Schema(testTableName, (
 					("id", Types.int, (Modifiers.primaryKey,)),
-					("var_char_column", Types.varchar, (Modifiers.notNull,), constants.kSchemaNameLenMax),
+					("var_char_column", Types.varchar, (Modifiers.notNull,), SkyEye.Server.constants.kSchemaNameLenMax),
 					("bool_column", Types.bool, ())
 					))
 	if not dbConnection.CreateTable(testSchema):
@@ -74,13 +75,13 @@ def TestAll(pLog):
 	
 	#Test dropping a table.
 	pLog.LogDebug("Testing dropTable()...")
-	#dbConnection.dropTable(relatedTableName)
+	dbConnection.DropTable(relatedTableName)
 	#Make sure the table's actually gone.
 	if dbConnection.TableExists(relatedTableName):
 		pLog.LogError("Test table \"{0}\" was not successfully dropped!".format(relatedTableName), where=kMethodTestAll)
 		
 	#Delete the other table too.
-	#dbConnection.dropTable(testTableName)
+	dbConnection.DropTable(testTableName)
 	if dbConnection.TableExists(testTableName):
 		pLog.LogError("Test table \"{0}\" was not successfully dropped!".format(testTableName), where=kMethodTestAll)
 		

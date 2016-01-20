@@ -4,7 +4,6 @@ Created on Jan 16, 2016
 @author: Me
 '''
 
-kSchemaNameLenMax = 255
 kDefaultDatabasePort = 5432
 
 #Method names...

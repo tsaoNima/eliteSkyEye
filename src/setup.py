@@ -13,7 +13,13 @@ setup(
 	author_email = "none@none.none",
 	license = "MIT Who Cares License",
 	long_description = open("readme.txt").read(), 
-	scripts = ["SkyEye/skyEye.py", "SkyEye/testAll.py", "SkyEye/setupTables.py"],
-	install_requires = ["psycopg2", "enum34", "colorama", "pytz", "keyring", "pypiwin32"],
+	scripts = ["SkyEye/skyEye.py", "SkyEye/testAll.py"],
+	install_requires = ["psycopg2",
+					"enum34",
+					"colorama",
+					"pytz",
+					"keyring",
+					"pypiwin32",
+					"ruamel.yaml"],
 	zip_safe = False
 	)
