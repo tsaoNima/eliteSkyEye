@@ -36,7 +36,7 @@ def connectToSubsystemAndRun(subsystem, user, password, onSubsystem, onSubsystem
 	dbName = subsystem[0]
 	#Log in to that subsystem's database.
 	db = connectToSubsystem(dbName, user, password)
-	subsystemSchemas = vars(subsystem[1])
+	subsystemSchemas = vars(subsystem[1].__class__)
 	#Iterate through the table schemas.
 	sLog.LogVerbose(("Connect to subsystem ", dbName, " and run with schemas ", subsystemSchemas))
 	onSubsystem(subsystemSchemas, db, dbName, *onSubsystemParameters)
@@ -57,7 +57,7 @@ def connectToAdminDBAndRunOnAllSubsystems(user, password, onSubsystem, onSubsyte
 	sLog.LogVerbose(("Connect to ADMIN and run with subsystems: ", subSystems))
 	for s in subSystems:
 		subsystemName = s[0]
-		subsystemSchemas = vars(s[1])
+		subsystemSchemas = vars(s[1].__class__)
 		sLog.LogVerbose(("Connect to ADMIN and run on subsystem " ,
 						subsystemName,
 						" with schemas ",
