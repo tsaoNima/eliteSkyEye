@@ -18,7 +18,7 @@ kTagEmpty = ""
 kWhereUnknown = "(unknown function)"
 
 #Log file constants.
-kFmtLogFileLine = "[{0}] {1}@{2}({3}): {4}"
+kFmtLogFileLine = "[{0}] {1}@{2}<{3}>: {4}"
 """Format line used for writing to a log file. Parameters:
 0: Time the message was logged.
 1: Log level.
@@ -35,7 +35,7 @@ kLogLevelNames = {
 				LogLevel.Error : "E"
 				}
 
-kFmtStdOutLine = "[{0}] @{1}({2}): {3}"
+kFmtStdOutLine = "[{0}] @{1}<{2}>: {3}"
 """Format line used for writing to a console listener. Parameters:
 0: Time the message was logged.
 1: Where the message was sent from.
@@ -53,3 +53,8 @@ kFmtLogClosingLogFile = "setLogFile(): Closing log file {0}"
 kFmtLogSwitchedLogFile = "setLogFile(): Switched to log file {0}"
 kFmtLogFileOpenFailed = "setLogFile(): Couldn't open \"{0}\", aborting!\nReason: {1}"
 kLogNoFileOpen = "setLogFile(): No log file specified, buffer will not be saved!"
+
+kMethodDebugLog = "Log.debugLog()"
+kMethodSetLogFile = "Log.SetLogFile()"
+kMethodAttach = "Log.Attach()"
+kMethodShutdown = "Log.Shutdown()"

@@ -8,9 +8,9 @@ import constants
 from ..Logging import log
 from ..Logging.structs import LogLevel
 from ..Logging import consoleListener
-from schemas import Types
-from schemas import Modifiers
-from schemas import Schema
+from SkyEye.Server.schemas import Types
+from SkyEye.Server.schemas import Modifiers
+from SkyEye.Server.schemas import Schema
 
 def TestAll(pLog):
 	kMethodTestAll = "tests.TestAll()"
@@ -84,9 +84,9 @@ def TestAll(pLog):
 	if dbConnection.TableExists(testTableName):
 		pLog.LogError("Test table \"{0}\" was not successfully dropped!".format(testTableName), where=kMethodTestAll)
 		
-	#Close our connection.
+	#Disconnect our connection.
 	pLog.LogDebug("Closing connection to server...", where=kMethodTestAll)
-	dbConnection.Close()
+	dbConnection.Disconnect()
 	
 if __name__ == "__main__":
 	mLog = log.GetLogInstance()

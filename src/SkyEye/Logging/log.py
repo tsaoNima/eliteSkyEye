@@ -47,7 +47,7 @@ class Log(object):
 		and also attempts to display it to listeners.
 		"""
 		print message
-		self.LogDebug(message)
+		self.LogDebug(message, constants.kTagAll, constants.kMethodDebugLog)
 	
 	def broadcast(self, msg):
 		"""Broadcasts the current line to all subscribers.

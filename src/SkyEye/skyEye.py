@@ -1,5 +1,5 @@
 import sys
-import server
+from Server import server
 import constants
 from Logging.structs import LogLevel
 from Logging import log

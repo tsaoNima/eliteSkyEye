@@ -7,6 +7,7 @@ import psycopg2
 import constants
 from ..Logging import log
 from ..Logging.structs import LogLevel
+from ..Exceptions import exceptions
 
 sLog = log.GetLogInstance()
 
@@ -115,6 +116,9 @@ class Database(object):
 	Attempts to connect to the requested database
 	on this machine.
 	Returns True if the connection was successful, False otherwise.
+	Raises:
+		* PaswordInvalidError if the given password was invalid.
+		* InternalServiceError if any other connection error occurred.
 	'''
 	def Connect(self, pDatabase, pUser, pPassword):
 		port = constants.kDefaultDatabasePort
@@ -136,16 +140,23 @@ class Database(object):
 			return True
 		except psycopg2.Error as e:
 			#Something bad happened.
-			sLog.LogError(constants.kFmtErrConnectionFailed.format(e),
-						constants.kTagDatabase,
-						constants.kMethodConnect)
-			self.Close()
+			newError = None
+			#Was it just a bad password?
+			if e.pgcode != psycopg2.errorcodes.INVALID_PASSWORD:
+				#If so, report that.
+				newError = exceptions.PasswordInvalidError()
+			#Otherwise, pack into a larger error.
+			else:
+				newError = exceptions.InternalServiceError(str(e))
+			#Abort connection and bubble exception up.
+			self.Disconnect()
+			raise newError
 			return False
 		
 	'''
 	Closes database connection.
 	'''
-	def Close(self):
+	def Disconnect(self):
 		if self.cursor is not None:
 			self.cursor.close()
 		if self.connection is not None:
