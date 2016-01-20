@@ -103,7 +103,7 @@ class SkyEyeDaemon(object):
 			self.mLog.Attach(listener)
 			
 	def verifyServer(self):
-		problems = self.server.VerifyTables()
+		problems = self.server.VerifyDatabases()
 		#If not, ask if you want to generate defaults.
 		if problems:
 			self.mLog.LogWarning(constants.kWarnServerVerifyFailed,

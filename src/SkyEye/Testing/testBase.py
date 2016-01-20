@@ -4,7 +4,7 @@ Created on Jan 20, 2016
 @author: Me
 '''
 import constants
-
+import traceback
 from SkyEye.Logging import log
 from SkyEye.Logging.consoleListener import ConsoleListener
 from SkyEye.Logging.structs import LogLevel
@@ -59,10 +59,6 @@ class TestBase(object):
 			self.logSystem.LogError(constants.kFatalTestFailure,
 								constants.kTagTesting,
 								constants.kMethodTestAll)
-		except Exception:
-			self.logSystem.LogError(constants.kUnhandledFailure,
-								constants.kTagTesting,
-								constants.kMethodTestAll)
 		self.summarizeResults()
 	
 	def BatchRun(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose):
@@ -90,10 +86,20 @@ class TestBase(object):
 		self.numTestsAttempted += 1
 		
 		#If we failed...
-		if not testMethod(*testParams):
-			#Note the failure.
+		try:
+			if not testMethod(*testParams):
+				#Note the failure.
+				self.numTestsFailed += 1
+				self.logSystem.LogError(constants.kFmtTestFailed.format(methodName), constants.kTagTesting, where)
+				#Raise any exception if we did fail.
+				if raiseIfFailed:
+					raise TestFailedError(methodName)
+		except Exception as e:
+			#If any unhandled exception occurs, mark this as a failed test.
 			self.numTestsFailed += 1
-			self.logSystem.LogError(constants.kFmtTestFailed.format(methodName), constants.kTagTesting, where)
-			#Raise any exception if we did fail.
-			if raiseIfFailed:
-				raise TestFailedError(methodName)
+			self.logSystem.LogError(constants.kFmtTestUnhandledFailure.format(methodName, e, traceback.format_exc()),
+								constants.kTagTesting,
+								where)
+			#Definitely raise an exception now, since this would ordinarily be fatal to the app.
+			raise TestFailedError(methodName)
+			

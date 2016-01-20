@@ -207,7 +207,7 @@ class Server(object):
 		#Report that we're logged out.
 		sLog.LogInfo(constants.kLogoutComplete, constants.kTagServer, constants.kMethodLogout)
 	
-	def VerifyTables(self):
+	def VerifyDatabases(self):
 		"""Checks that all tables in the server match expected schema.
 		Returns: True if all tables match expected schema, False otherwise.
 		Raises:
@@ -225,7 +225,7 @@ class Server(object):
 			return False
 		
 		#Perform verification.
-		return setupTables.VerifyTables(constants.kServerDBAdminName, self.getPassword())
+		return setupTables.VerifyDatabases(constants.kServerDBAdminName, self.getPassword())
 	
 	def FirstTimeSetup(self):
 		"""Creates database admin account and subsystem databases for the first run.
@@ -283,7 +283,7 @@ class Server(object):
 		sysAdminDB.Disconnect()
 		
 		#Create all default tables.
-		setupTables.SetupTables(constants.kServerDBAdminName, self.getPassword())
+		setupTables.SetupDatabases(constants.kServerDBAdminName, self.getPassword())
 	
 		#We're done!
 		self.setupLog(constants.kFirstTimeSetupComplete, LogLevel.Info)

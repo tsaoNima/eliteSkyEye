@@ -32,49 +32,25 @@ def connectToSubsystem(subsystemName, user, password):
 		raise e
 	return db
 
-def iterateTables(user, password, callerContext, onTableExists, onTableDoesNotExist):
-	"""Used to test/setup all databases.
-	Parameters:
-		* onTableExists: Callback function. Should take four parameters:
-			* callerContext: Same as callerContext passed to iterateTables.
-			* subsystemName: Name of the subsystem.
-			* db: The database connection.
-			* schema: The table schema.
-		* onTableDoesNotExist: Callback function, called when a table of the given name could not be found.
-		Should take four parameters:
-			* callerContext: Same as callerContext passed to iterateTables.
-			* subsystemName: Name of the subsystem.
-			* db: The database connection.
-			* schema: The table schema.
-	Raises: 
-		* PasswordInvalidError if the given password can't be used to login. 
-		* InternalServiceError if we could not connect to the database for any other reason.
-	"""
+def connectToSubsystemAndRun(subsystem, user, password, onSubsystem, onSubsystemParameters=()):
+	dbName = subsystem[0]
+	#Log in to that subsystem's database.
+	db = connectToSubsystem(dbName, user, password)
 	
-	#For each subsystem:
+	#Iterate through the table schemas.
+	onSubsystem(subsystem[1], db, dbName *onSubsystemParameters)
+			
+	#Remember to disconnect from each system's DB!
+	db.Disconnect()
+	
+def connectToAllSubsystemsAndRun(user, password, onSubsystem, onSubsystemParameters=()):
 	for s in subSystems:
-		dbName = s[0]
-		
-		#Log in to that subsystem's database.
-		db = connectToSubsystem(dbName, user, password)
-		
-		#Iterate through the table schemas.
-		for schema in vars(s):
-			#Does this table already exist?
-			if db.TableExists(schema.schemaName):
-				#If so, enter callback.
-				onTableExists(callerContext, dbName, db, schema)
-			else:
-				#Otherwise enter other callback.
-				onTableDoesNotExist(callerContext, dbName, db, schema)
-				
-		#Remember to disconnect from each system's DB!
-		db.Disconnect()
+		connectToSubsystemAndRun(s, user, password, onSubsystem, onSubsystemParameters)
 
 #For verification.
 def verifyOnTableExists(callerContext, subsystemName, db, schema):
 	"""
-	Callback for VerifyTables(), called when the requested table exists.
+	Callback for VerifyDatabases(), called when the requested table exists.
 	"""
 	#Check the individual columns...
 	for column in schema.schemaColumns:
@@ -92,30 +68,61 @@ def verifyOnTableExists(callerContext, subsystemName, db, schema):
 
 def verifyOnTableDoesNotExist(callerContext, subsystemName, db, schema):
 	"""
-	Callback for VerifyTables(), called when the requested table does not exist.
+	Callback for VerifyDatabases(), called when the requested table does not exist.
 	"""
 	#Add to error list.
 	problem = (subsystemName, schema.schemaName, verifyProblem.TableMissing(schema.schemaName))
 	callerContext.append(problem)
 
-#For setup.
-def setupOnTableExists(callerContext, subsystemName, db, schema):
-	"""
-	Callback for SetupTables(), called when the requested table exists.
-	"""
-	#Drop the current table.
-	db.DropTable(schema.schemaName)
-	#Create the table.
-	db.CreateTable(schema)
+def dropSubsystemTables(subsystemSchemas, db, subsystemName):
+	for schema in subsystemSchemas:
+		#Drop the table!
+		if not db.DropTable(schema.schemaName):
+			raise exceptions.InternalServiceError("Failed to drop table {0}".format(schema.SchemaName))
 
-def setupOnTableDoesNotExist(callerContext, subsystemName, db, schema):
-	"""
-	Callback for SetupTables(), called when the requested table exists.
-	"""
-	#Create the table.
-	db.CreateTable(schema)
+def setupSubsystemTables(subsystemSchemas, db, subsystemName):
+	for schema in subsystemSchemas:
+		#Create the table.
+		if not db.CreateTable(schema):
+			raise exceptions.InternalServiceError("Failed to create table {0}".format(schema.SchemaName))
 
-def VerifyTables(user, password):
+def verifySubsystemTables(subsystemSchemas, db, subsystemName, callerContext):
+	for schema in subsystemSchemas:
+		#Does this table already exist?
+		if db.TableExists(schema.schemaName):
+			#If so, enter callback.
+			verifyOnTableExists(callerContext, subsystemName, db, schema)
+		else:
+			#Otherwise enter other callback.
+			verifyOnTableDoesNotExist(callerContext, subsystemName, db, schema)
+
+def DropTablesForDatabase(user, password, subsystem):
+	"""Raises: 
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason,
+		or a table was not successfully dropped.
+	"""
+	connectToSubsystemAndRun(subsystem, user, password, dropSubsystemTables)
+
+def SetupTablesForDatabase(user, password, subsystem):
+	"""Raises: 
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason,
+		or a table was not successfully dropped.
+	"""
+	connectToSubsystemAndRun(subsystem, user, password, setupSubsystemTables)
+
+def VerifyTablesForDatabase(user, password, subsystem):
+	"""Raises: 
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason,
+		or a table was not successfully dropped.
+	"""
+	results = []
+	connectToSubsystemAndRun(subsystem, user, password, verifySubsystemTables, (results,))
+	return results
+
+def VerifyDatabases(user, password):
 	"""Checks that all tables in the server match the schema.
 	Returns: A list of problems, if any, with the tables and columns of the server.
 	Each problem is a tuple consisting of the following:
@@ -132,54 +139,54 @@ def VerifyTables(user, password):
 	raise NotImplementedError()
 	
 	#The list of things that failed verification.
-	#Elements are tuples:
-	
 	results = []
-	iterateTables(user, password, results, verifyOnTableExists, verifyOnTableDoesNotExist)
+	
+	for s in subSystems:
+		VerifyTablesForDatabase(user, password, s)
+	
 	return results
+	
+def dropSubsystemDatabase(subsystemSchemas, db, subsystemName):
+	if not db.DropDatabase(subsystemName):
+			raise exceptions.InternalServiceError("Failed to drop database {0}".format(subsystemName))
 
-def DropTables(user, password):
-	"""Drops all tables used by the server.
+def createSubsystemDatabase(subsystemSchemas, db, subsystemName):
+	if not db.CreateDatabase(subsystemName):
+			raise exceptions.InternalServiceError("Failed to create database {0}".format(subsystemName))
+	
+def DropDatabases(user, password):
+	"""Drops all databases!
 	Raises: 
 		* PasswordInvalidError if the given password can't be used to login. 
 		* InternalServiceError if we could not connect to the database for any other reason,
 		or a table was not successfully dropped.
 	"""
-	for s in subSystems:
-		dbName = s[0]
+	connectToAllSubsystemsAndRun(user, password, dropSubsystemDatabase)
 		
-		#Log in to that subsystem's database.
-		db = connectToSubsystem(dbName, user, password)
-		
-		#Iterate through the table schemas.
-		for schema in vars(s):
-			#Drop the table!
-			if not db.DropTable(schema.schemaName):
-				raise exceptions.InternalServiceError("Failed to drop table {0}".format(schema.SchemaName))
-				
-		#Remember to disconnect from each system's DB!
-		db.Disconnect()
-
-def SetupTables(user, password):
-	"""Drops all tables used by the server,
-	then creates all tables specified in the schema.
+def SetupDatabases(user, password):
+	"""Drops all databases,
+	then creates them again as specified in the schema.
 	All data will be lost!
-	Raises: 
-		* PasswordInvalidError if the given password can't be used to login. 
-		* InternalServiceError if we could not connect to the database for any other reason.
 	"""
 	
 	#Would be nice to back up the data first, but one step at a time.
 	pass
-
-	#Drop any existing data.
-	DropTables(user, password)
+	sLog.LogWarning("TODO: Implement data backup!",
+				constants.kTagSetupTables,
+				"setupTables.SetupDatabases()")
 	
-	#Create the tables.
-	iterateTables(user, password, None, setupOnTableExists, setupOnTableDoesNotExist)
+	#Drop everything!
+	DropDatabases(user, password)
 	
+	#Create the databases first.
+	connectToAllSubsystemsAndRun(user, password, createSubsystemDatabase)
+	
+	#Now setup the databases.
+	for s in subSystems:
+		SetupTablesForDatabase(user, password, s)
+		
 	#Ideally, fill in the tables with default data afterwards.
 	pass
 	sLog.LogWarning("TODO: Implement default data initialization!",
 				constants.kTagSetupTables,
-				"setupTables.SetupTables()")
+				"setupTables.SetupDatabases()")
