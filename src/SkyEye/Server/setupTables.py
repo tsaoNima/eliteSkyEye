@@ -11,9 +11,29 @@ from ..Logging import log
 from ..Exceptions import exceptions
 
 sLog = log.GetLogInstance()
+subSystems = ((constants.kGDWDatabaseName, schemas.GDWSchemas()),
+				(constants.kRDADatabaseName, schemas.RDASchemas()))
+
+def connectToSubsystem(subsystemName, user, password):
+	"""Attempts to connect to the requested subsystem's database.
+	Returns: A Database object representing the subsystem's database.
+	Raises:
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason.
+	"""
+	db = database.Database()
+	try:
+		db.Connect(subsystemName, user, password)
+	#If login failed, abort.
+	except exceptions.PasswordInvalidError as e:
+		sLog.LogError(constants.kFmtErrBadCredentials.format(user),
+					constants.kTagSetupTables,
+					constants.kMethodConnectToSubsystem)
+		raise e
+	return db
 
 def iterateTables(user, password, callerContext, onTableExists, onTableDoesNotExist):
-	'''Used to test/setup all databases.
+	"""Used to test/setup all databases.
 	Parameters:
 		* onTableExists: Callback function. Should take four parameters:
 			* callerContext: Same as callerContext passed to iterateTables.
@@ -26,30 +46,18 @@ def iterateTables(user, password, callerContext, onTableExists, onTableDoesNotEx
 			* subsystemName: Name of the subsystem.
 			* db: The database connection.
 			* schema: The table schema.
-	Returns: True if all subsystems could be iterated, False otherwise.
-	Raises: InternalServiceError if we could not connect to the server for any reason.
-	'''
+	Raises: 
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason.
+	"""
 	
-	#Check - do we have credentials?
-	#If not, ask for login.
-	
-	#Check each subsystem.
-	subSystems = ((constants.kGDWDatabaseName, schemas.GDWSchemas()),
-				(constants.kRDADatabaseName, schemas.RDASchemas()))
 	#For each subsystem:
 	for s in subSystems:
 		dbName = s[0]
+		
 		#Log in to that subsystem's database.
-		db = database.Database()
-		try:
-			db.Connect(dbName, user, password)
-		#If login failed, abort.
-		except exceptions.SkyEyeError as e:
-			sLog.LogError(constants.kFmtErrDBConnectionFailed.format(dbName),
-						constants.kTagSetupTables,
-						constants.kMethodIterateTables)
-			raise exceptions.InternalServiceError(str(e))
-			return False
+		db = connectToSubsystem(dbName, user, password)
+		
 		#Iterate through the table schemas.
 		for schema in vars(s):
 			#Does this table already exist?
@@ -59,7 +67,9 @@ def iterateTables(user, password, callerContext, onTableExists, onTableDoesNotEx
 			else:
 				#Otherwise enter other callback.
 				onTableDoesNotExist(callerContext, dbName, db, schema)
-	return True
+				
+		#Remember to disconnect from each system's DB!
+		db.Disconnect()
 
 #For verification.
 def verifyOnTableExists(callerContext, subsystemName, db, schema):
@@ -113,10 +123,13 @@ def VerifyTables(user, password):
 		2. Table name.
 		3. The problem as an object. Problems have an error code (accessible as ".problemCode")
 		and a detailed error string (accessible as ".problemString" or __str__()). 
+	Raises: 
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason.
 	"""
 	
 	#Ideally we should check schema version first.
-	pass
+	raise NotImplementedError()
 	
 	#The list of things that failed verification.
 	#Elements are tuples:
@@ -125,11 +138,48 @@ def VerifyTables(user, password):
 	iterateTables(user, password, results, verifyOnTableExists, verifyOnTableDoesNotExist)
 	return results
 
-def SetupTables(user, password):
-	"""Creates all tables specified in the schema.
-	Assumes that none of these tables already exists; otherwise you will get errors.
+def DropTables(user, password):
+	"""Drops all tables used by the server.
+	Raises: 
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason,
+		or a table was not successfully dropped.
 	"""
-	result = iterateTables(user, password, None, setupOnTableExists, setupOnTableDoesNotExist)
+	for s in subSystems:
+		dbName = s[0]
+		
+		#Log in to that subsystem's database.
+		db = connectToSubsystem(dbName, user, password)
+		
+		#Iterate through the table schemas.
+		for schema in vars(s):
+			#Drop the table!
+			if not db.DropTable(schema.schemaName):
+				raise exceptions.InternalServiceError("Failed to drop table {0}".format(schema.SchemaName))
+				
+		#Remember to disconnect from each system's DB!
+		db.Disconnect()
+
+def SetupTables(user, password):
+	"""Drops all tables used by the server,
+	then creates all tables specified in the schema.
+	All data will be lost!
+	Raises: 
+		* PasswordInvalidError if the given password can't be used to login. 
+		* InternalServiceError if we could not connect to the database for any other reason.
+	"""
+	
+	#Would be nice to back up the data first, but one step at a time.
+	pass
+
+	#Drop any existing data.
+	DropTables(user, password)
+	
+	#Create the tables.
+	iterateTables(user, password, None, setupOnTableExists, setupOnTableDoesNotExist)
+	
 	#Ideally, fill in the tables with default data afterwards.
 	pass
-	return result
+	sLog.LogWarning("TODO: Implement default data initialization!",
+				constants.kTagSetupTables,
+				"setupTables.SetupTables()")

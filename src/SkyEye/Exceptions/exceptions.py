@@ -12,6 +12,12 @@ class SkyEyeError(Exception):
 	def __str__(self):
 		return repr(self.msg)
 
+class TestFailedError(SkyEyeError):
+	"""Raised if a unit test failed.
+	"""
+	def __init__(self, testName=constants.kUnknownTest):
+		self.msg = constants.kFmtErrTestFailed.format(testName)
+
 class UnsupportedPlatformError(SkyEyeError):
 	"""Raised if the given platform doesn't support a requested function.
 	"""

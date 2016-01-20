@@ -58,17 +58,17 @@ Note that this doesn't check the current schema!
 	0: Table name.
 """
 
-kQueryDropTable = "DROP TABLE {0};"
+kQueryDropTable = "DROP TABLE IF EXISTS {0};"
 """Drops the requested table.
 	0: Table name.
 """
 
-kQueryDropDatabase = "DROP DATABASE {0};"
+kQueryDropDatabase = "DROP DATABASE IF EXISTS {0};"
 """Drops the requested database.
 	0: Database name.
 """
 
-kQueryDropUser = "DROP USER {0};"
+kQueryDropUser = "DROP USER IF EXISTS {0};"
 """Drops the requested user.
 	0: User name.
 """

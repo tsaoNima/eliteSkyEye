@@ -22,6 +22,7 @@ kErrCredentialRequestFailed = "Couldn't get new credentials!"
 kErrTooManyPromptsFailed = "Login attempts exceeded, aborting login!"
 kErrNotLoggedIn = "Not logged in, can't complete request!"
 kErrNoAdminPassword = "Database admin password not set!"
+kFmtErrBadCredentials = "User name or password invalid for user {0}!"
 kLoginComplete = "Administrator connected to server."
 kLogoutComplete = "Administrator has logged out."
 
@@ -46,4 +47,5 @@ kTagServer = "Server"
 kFmtErrDBConnectionFailed = "Couldn't connect to database {0}, aborting!"
 
 kMethodIterateTables = "setupTables.iterateTables()"
+kMethodConnectToSubsystem = "setupTables.connectToSubsystem()"
 kTagSetupTables = "SetupTables"

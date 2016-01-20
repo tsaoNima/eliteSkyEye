@@ -195,7 +195,7 @@ class Database(object):
 	
 	def DropTable(self, tableName):
 		"""Attempts to drop the requested table.
-		Returns True if the table was dropped, False otherwise.
+		Returns True if the table was dropped or if the table did not exist, False otherwise.
 		"""
 	
 		queryStr = constants.kQueryDropTable.format(tableName)
@@ -210,7 +210,7 @@ class Database(object):
 		
 	def DropDatabase(self, dbName):
 		"""Attempts to drop the requested *database*.
-		Returns True if the table was dropped, False otherwise.
+		Returns True if the table was dropped or if the database did not exist, False otherwise.
 		"""
 		isolationLevel = self.connection.isolation_level
 		#Switch to autocommit mode to allow this operation.
@@ -231,7 +231,7 @@ class Database(object):
 	
 	def DropUser(self, userName):
 		"""Attempts to drop the requested user.
-		Returns True if the user was dropped, False otherwise.
+		Returns True if the user was dropped or if the user did not exist, False otherwise.
 		"""
 		isolationLevel = self.connection.isolation_level
 		#Switch to autocommit mode to allow this operation.
@@ -296,7 +296,7 @@ class Database(object):
 		
 	def CreateUser(self, userName, userPassword, isSuperUser=False, canCreateDB=False, connectionLimit=-1):
 		"""Attempts to create the requested user.
-		Returns True if the database was created, False otherwise.
+		Returns True if the user was created, False otherwise.
 		"""
 		
 		#Sanity check.
