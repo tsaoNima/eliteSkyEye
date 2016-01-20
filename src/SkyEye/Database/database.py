@@ -308,6 +308,7 @@ class Database(object):
 		self.connection.set_isolation_level(0)
 		logStr = constants.kFmtCreatingUser.format(userName)
 		logLevel = LogLevel.Debug
+		
 		#Build the query.
 		queryStr = constants.kQueryCreateUser.format(userName, userPassword)
 		if isSuperUser:
@@ -330,4 +331,3 @@ class Database(object):
 		#Switch back to original isolation level.
 		self.connection.set_isolation_level(isolationLevel)
 		return result
-		pass

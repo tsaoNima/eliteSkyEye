@@ -13,7 +13,6 @@ from ..Logging import log
 from ..Keychain import keychainOps
 from ..Logging.structs import LogLevel
 from ..Exceptions import exceptions
-from SkyEye.Server.constants import kGDWDatabaseName, kRDADatabaseName
 
 sLog = log.GetLogInstance()
 
@@ -158,6 +157,7 @@ class Server(object):
 		credentialsReset = False
 		while not credentialsReset:
 			credentialsReset = self.requestNewCredentials()
+			
 		#Perform the CREATE USER query. This is the DB admin,
 		#so it should have rights to create a database.
 		if not sysAdminDB.CreateUser(constants.kServerDBAdminName,
@@ -166,7 +166,6 @@ class Server(object):
 									canCreateDB=True):
 			raise exceptions.InternalServiceError("Failed to create user {0}!".format(constants.kServerDBAdminName))
 		self.setupLog(constants.kFirstTimeSetupDBAdminCreated, LogLevel.Debug)
-		pass
 	
 	def __init__(self, pBatchMode = True):
 		self.gdwDatabase = Database()
