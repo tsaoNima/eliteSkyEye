@@ -5,7 +5,7 @@ Created on Jan 15, 2016
 '''
 import schemas
 import constants
-import verifyProblem
+from SkyEye.Database import verificationProblems
 from ..Database import database
 from ..Logging import log
 from ..Exceptions import exceptions
@@ -135,7 +135,7 @@ def verifyOnTableDoesNotExist(callerContext, subsystemName, db, schema):
 	Callback for VerifyDatabases(), called when the requested table does not exist.
 	"""
 	#Add to error list.
-	problem = (subsystemName, schema.SchemaName, verifyProblem.TableMissing(schema.SchemaName))
+	problem = (subsystemName, schema.SchemaName, verificationProblems.TableMissing(schema.SchemaName))
 	callerContext.append(problem)
 
 def dropSubsystemTables(subsystemSchemas, db, subsystemName):

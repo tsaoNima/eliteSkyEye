@@ -5,6 +5,7 @@ Created on Jan 20, 2016
 '''
 import constants
 import traceback
+import time
 from SkyEye.Logging import log
 from SkyEye.Logging.consoleListener import ConsoleListener
 from SkyEye.Logging.structs import LogLevel
@@ -81,7 +82,7 @@ class TestBase(object):
 		#Prep the log system.
 		self.logSystem.SetLogFile(logPath)
 		listener = ConsoleListener()
-		listener.SetLogLevel(LogLevel.Verbose)
+		listener.SetLogLevel(logLevel)
 		self.logSystem.Attach(listener)
 		
 		#Run all tests.
@@ -101,11 +102,16 @@ class TestBase(object):
 		
 		#Get our test result.
 		try:
+			#Also see how long it takes, assuming the test passes.
+			startTimeSecs = time.clock()
 			result = testMethod(*testParams)
+			endTimeSecs = time.clock()
+			elapsedTimeMs = (endTimeSecs - startTimeSecs) * 1000.0
+			
 			#Did we pass?
 			if result == TestResult.Pass:
 				self.numTestsPassed += 1
-				self.logSystem.LogInfo(constants.kFmtTestPassed.format(methodName), constants.kTagTesting, where)
+				self.logSystem.LogInfo(constants.kFmtTestPassed.format(methodName, elapsedTimeMs), constants.kTagTesting, where)
 			#Did we fail?
 			elif result == TestResult.Fail:
 				#Note the failure.
@@ -118,6 +124,7 @@ class TestBase(object):
 			elif result == TestResult.Skip:
 				self.numTestsSkipped += 1
 				self.logSystem.LogWarning(constants.kFmtTestSkipped.format(methodName), constants.kTagTesting, where)
+		
 		#Did a sub-test critically fail?
 		except TestFailedError as e:
 			self.numTestsFailed += 1

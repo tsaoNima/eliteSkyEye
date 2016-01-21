@@ -212,4 +212,4 @@ class DatabaseTests(TestBase):
 		self.dbConnection.Disconnect()
 	
 if __name__ == "__main__":
-	DatabaseTests().RunStandalone()
+	DatabaseTests().RunStandalone(logLevel=LogLevel.Info)
