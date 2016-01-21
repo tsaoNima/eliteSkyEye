@@ -268,15 +268,15 @@ class Database(object):
 		"""
 	
 		#Sanity check.
-		if not schema.schemaName:
-			sLog.LogWarning(constants.kFmtErrBadTableName.format(schema.schemaName), constants.kTagDatabase, constants.kMethodCreateTable)
+		if not schema.SchemaName:
+			sLog.LogWarning(constants.kFmtErrBadTableName.format(schema.SchemaName), constants.kTagDatabase, constants.kMethodCreateTable)
 			return
 		
 		#Build the CREATE TABLE string.
-		columns = self.buildColumnString(schema.schemaColumns)
+		columns = self.buildColumnString(schema.SchemaColumns)
 		
 		#Do our query!
-		createString = constants.kFmtQueryCreateTable.format(schema.schemaName, columns)
+		createString = constants.kFmtQueryCreateTable.format(schema.SchemaName, columns)
 		sLog.LogDebug(constants.kFmtCreatingTable.format(createString),
 					constants.kTagDatabase,
 					constants.kMethodCreateTable)

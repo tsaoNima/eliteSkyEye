@@ -11,8 +11,7 @@ from ..Logging import log
 from ..Exceptions import exceptions
 
 sLog = log.GetLogInstance()
-subSystems = ((constants.kGDWDatabaseName, schemas.GDWSchemas()),
-				(constants.kRDADatabaseName, schemas.RDASchemas()))
+subSystems = (schemas.GDWSchemas(), schemas.RDASchemas())
 
 def connectToSubsystem(subsystemName, user, password):
 	"""Attempts to connect to the requested subsystem's database.
@@ -33,35 +32,31 @@ def connectToSubsystem(subsystemName, user, password):
 	return db
 
 def connectToSubsystemAndRun(subsystem, user, password, onSubsystem, onSubsystemParameters=()):
-	dbName = subsystem[0]
+	dbName = subsystem.Name
 	#Log in to that subsystem's database.
 	db = connectToSubsystem(dbName, user, password)
-	subsystemSchemas = vars(subsystem[1].__class__)
+	subsystemSchemas = subsystem.AllSchemas
+	sLog.LogDebug(subsystemSchemas)
 	#Iterate through the table schemas.
-	sLog.LogVerbose(("Connect to subsystem ", dbName, " and run with schemas ", subsystemSchemas))
 	onSubsystem(subsystemSchemas, db, dbName, *onSubsystemParameters)
 			
 	#Remember to disconnect from each system's DB!
 	db.Disconnect()
 	
 def connectToAllSubsystemsAndRun(user, password, onSubsystem, onSubsystemParameters=()):
-	sLog.LogVerbose(("Connect and run with subsystems: ", subSystems))
 	for s in subSystems:
 		connectToSubsystemAndRun(s, user, password, onSubsystem, onSubsystemParameters)
 
 def connectToAdminDBAndRunOnAllSubsystems(user, password, onSubsystem, onSubsytemParameters=()):
+	#Note that we're on the system admin DB.
 	sLog.LogWarning(constants.kFmtWarnAdminDBConnectionAttempted.format(user),
 				constants.kTagSetupTables,
 				constants.kMethodConnectToAdminDBAndRunOnAllSubsystems)
 	db = connectToSubsystem(constants.kSysAdminDatabaseName, user, password)
-	sLog.LogVerbose(("Connect to ADMIN and run with subsystems: ", subSystems))
 	for s in subSystems:
-		subsystemName = s[0]
-		subsystemSchemas = vars(s[1].__class__)
-		sLog.LogVerbose(("Connect to ADMIN and run on subsystem " ,
-						subsystemName,
-						" with schemas ",
-						subsystemSchemas))
+		subsystemName = s.Name
+		subsystemSchemas = s.AllSchemas
+		sLog.LogDebug(subsystemSchemas)
 		onSubsystem(subsystemSchemas, db, subsystemName, *onSubsytemParameters)
 	db.Disconnect()
 
@@ -71,7 +66,7 @@ def verifyOnTableExists(callerContext, subsystemName, db, schema):
 	Callback for VerifyDatabases(), called when the requested table exists.
 	"""
 	#Check the individual columns...
-	for column in schema.schemaColumns:
+	for column in schema.SchemaColumns:
 		#If the column doesn't exist, add to list of problems.
 		#Otherwise, check schema details:
 		#	Does the column name match?
@@ -89,13 +84,13 @@ def verifyOnTableDoesNotExist(callerContext, subsystemName, db, schema):
 	Callback for VerifyDatabases(), called when the requested table does not exist.
 	"""
 	#Add to error list.
-	problem = (subsystemName, schema.schemaName, verifyProblem.TableMissing(schema.schemaName))
+	problem = (subsystemName, schema.SchemaName, verifyProblem.TableMissing(schema.SchemaName))
 	callerContext.append(problem)
 
 def dropSubsystemTables(subsystemSchemas, db, subsystemName):
 	for schema in subsystemSchemas:
 		#Drop the table!
-		if not db.DropTable(schema.schemaName):
+		if not db.DropTable(schema.SchemaName):
 			raise exceptions.InternalServiceError("Failed to drop table {0}".format(schema.SchemaName))
 
 def setupSubsystemTables(subsystemSchemas, db, subsystemName):
@@ -107,7 +102,7 @@ def setupSubsystemTables(subsystemSchemas, db, subsystemName):
 def verifySubsystemTables(subsystemSchemas, db, subsystemName, callerContext):
 	for schema in subsystemSchemas:
 		#Does this table already exist?
-		if db.TableExists(schema.schemaName):
+		if db.TableExists(schema.SchemaName):
 			#If so, enter callback.
 			verifyOnTableExists(callerContext, subsystemName, db, schema)
 		else:

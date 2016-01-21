@@ -12,6 +12,7 @@ from SkyEye.Server.schemas import Modifiers
 from SkyEye.Server.schemas import Schema
 import SkyEye.Server.constants
 from SkyEye.Testing.testBase import TestBase
+from SkyEye.Testing.testBase import TestResult
 
 class DatabaseTests(TestBase):
 	dbConnection = None
@@ -24,9 +25,9 @@ class DatabaseTests(TestBase):
 		
 		if not self.dbConnection.Connect("testDB", "testUser", "testPassword"):
 			self.logSystem.LogError("Connection failed! Aborting test!", where=kMethod)
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testTableExists(self, tableName):
 		kMethod = "tests.testTableExists()"
@@ -34,15 +35,15 @@ class DatabaseTests(TestBase):
 		#Make sure TableExists() finds existing tables.
 		if not self.dbConnection.TableExists(tableName):
 			self.logSystem.LogError("Couldn't find test table \"{0}\"!".format(tableName), where=kMethod)
-			return False
+			return TestResult.Fail
 		
 		#Make sure it can't find nonexistent tables.
 		nonExistentTableName = "shouldNotExist"
 		if self.dbConnection.TableExists(nonExistentTableName):
 			self.logSystem.LogError("Found nonexistent table \"{0}\"!".format(nonExistentTableName), where=kMethod)
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testDescribeTable(self, tableName):
 		kMethod = "tests.testDescribeTable()"
@@ -50,11 +51,11 @@ class DatabaseTests(TestBase):
 		tableDesc = self.dbConnection.DescribeTable(tableName)
 		if not tableDesc:
 			self.logSystem.LogError("Couldn't describe table \"{0}\"!".format(tableName), where=kMethod)
-			return False
+			return TestResult.Fail
 		else:
 			self.logSystem.LogDebug("Description of table \"{0}\":\n{1}".format(tableName, tableDesc), where=kMethod)
 			
-		return True
+		return TestResult.Pass
 			
 	def testCreateTable(self, testTableName):
 		testSchema = Schema(testTableName, (
@@ -63,9 +64,9 @@ class DatabaseTests(TestBase):
 						("bool_column", Types.bool, ())
 						))
 		if not self.dbConnection.CreateTable(testSchema):
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testCreateRelatedTable(self, testTableName, relatedTableName):
 		kMethod = "tests.testCreateRelatedTable()"
@@ -78,12 +79,12 @@ class DatabaseTests(TestBase):
 							))
 		if not self.dbConnection.CreateTable(relatedSchema):
 			self.logSystem.LogError("Table w/ foreign key creation failed!", where=kMethod)
-			return False
+			return TestResult.Fail
 		else:
 			#Try to describe the table.
 			tableDesc = self.dbConnection.DescribeTable(relatedTableName)
 			self.logSystem.LogDebug("Description of table \"{0}\":\n{1}".format(relatedTableName, tableDesc), where=kMethod)
-		return True
+		return TestResult.Pass
 	
 	def testDropTable(self, testTableName, relatedTableName):
 		kMethod = "tests.testDropTable()"
@@ -93,16 +94,16 @@ class DatabaseTests(TestBase):
 		if self.dbConnection.TableExists(relatedTableName):
 			self.logSystem.LogError("Test table \"{0}\" was not successfully dropped!".format(relatedTableName),
 								 where=kMethod)
-			return False
+			return TestResult.Fail
 			
 		#Delete the other table too.
 		self.dbConnection.DropTable(testTableName)
 		if self.dbConnection.TableExists(testTableName):
 			self.logSystem.LogError("Test table \"{0}\" was not successfully dropped!".format(testTableName),
 								 where=kMethod)
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testTableOps(self):
 		kMethod = "tests.testTableOps()"
@@ -123,23 +124,23 @@ class DatabaseTests(TestBase):
 		#Test dropping a table.
 		self.DoTest(self.testDropTable, (testTableName, relatedTableName), kMethod)
 		
-		return True
+		return TestResult.Pass
 	
 	def testCreateUser(self, newUser, newPassword):
 		kMethod = "tests.testCreateUser()"
 		if not self.dbConnection.CreateUser(newUser, newPassword, True, True, 7):
 			self.logSystem.LogError("Could not create user {0}!".format(newUser), where=kMethod)
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testDropUser(self, newUser):
 		kMethod = "tests.testDropUser()"
 		if not self.dbConnection.DropUser(newUser):
 			self.logSystem.LogError("Could not drop user {0}!".format(newUser), where=kMethod)
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testUserOps(self):
 		kMethod = "tests.testUserOps()"
@@ -153,25 +154,25 @@ class DatabaseTests(TestBase):
 		#Test dropping a user.
 		self.DoTest(self.testDropUser, (newUser,), where=kMethod)
 			
-		return True
+		return TestResult.Pass
 	
 	def testCreateDB(self, newDBName):
 		kMethod = "tests.testCreateDB()"
 		
 		if not self.dbConnection.CreateDatabase(newDBName):
 			self.logSystem.LogError("Could not create database {0}!".format(newDBName), where=kMethod)
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testDropDB(self, newDBName):
 		kMethod = "tests.testDropDB()"
 		
 		if not self.dbConnection.DropDatabase(newDBName):
 			self.logSystem.LogError("Could not drop database {0}!".format(newDBName), where=kMethod)
-			return False
+			return TestResult.Fail
 		
-		return True
+		return TestResult.Pass
 	
 	def testDBOps(self):
 		kMethod = "tests.testDBOps()"
@@ -183,7 +184,7 @@ class DatabaseTests(TestBase):
 		#Test dropping a database.
 		self.DoTest(self.testDropDB, (newDBName,), where=kMethod)
 		
-		return True
+		return TestResult.Pass
 	
 	def onTestAll(self):
 		kMethod = "tests.TestAll()"
@@ -210,4 +211,4 @@ class DatabaseTests(TestBase):
 		self.dbConnection.Disconnect()
 	
 if __name__ == "__main__":
-	DatabaseTests().BatchRun()
+	DatabaseTests().RunStandalone()

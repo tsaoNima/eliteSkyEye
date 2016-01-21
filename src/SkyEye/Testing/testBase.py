@@ -10,10 +10,21 @@ from SkyEye.Logging.consoleListener import ConsoleListener
 from SkyEye.Logging.structs import LogLevel
 from SkyEye.Exceptions.exceptions import TestFailedError
 
+class TestResult:
+	"""All functions called by DoTest must return one of the following:
+	"""
+	Pass = 0
+	Fail = 1
+	Skip = 2
+
 class TestBase(object):
 	def reset(self):
 		self.numTestsAttempted = 0
+		self.numTestsPassed = 0
 		self.numTestsFailed = 0
+		self.numTestsSkipped = 0
+		#If true, test should reject any standard input.
+		self.batchMode = True
 	
 	def onTestAll(self):
 		"""Called when TestAll() is called. Must be implemented.
@@ -22,18 +33,24 @@ class TestBase(object):
 		raise NotImplementedError("Must implement TestAll()!")
 	
 	def summarizeResults(self):
-		resultText = constants.kAllPassedSummary
-		resultLevel = LogLevel.Info
-		
-		if self.numTestsFailed > 0:
-			resultText = constants.kFmtPassFailSummary.format(self.numTestsAttempted - self.numTestsFailed,
-														self.numTestsFailed)
-			resultLevel = LogLevel.Error
-			
-		self.logSystem.Log(constants.kFmtResultSummary.format(self.__class__.__name__, self.numTestsAttempted, resultText),
-						resultLevel,
+		self.logSystem.LogInfo(constants.kFmtResultSummary.format(self.__class__.__name__, self.numTestsAttempted),
 						constants.kTagTesting,
 						constants.kMethodSummarizeResults)
+		
+		self.logSystem.LogInfo(constants.kFmtPassSummary.format(self.numTestsPassed),
+						constants.kTagTesting,
+						constants.kMethodSummarizeResults)
+		if self.numTestsSkipped > 0:
+			self.logSystem.LogWarning(constants.kFmtSkipSummary.format(self.numTestsSkipped),
+						constants.kTagTesting,
+						constants.kMethodSummarizeResults)
+		if self.numTestsFailed > 0:
+			self.logSystem.LogError(constants.kFmtFailSummary.format(self.numTestsFailed),
+						constants.kTagTesting,
+						constants.kMethodSummarizeResults)
+			
+		if self.numTestsPassed == self.numTestsAttempted:
+			self.logSystem.LogInfo(constants.kAllPassed, constants.kTagTesting, constants.kMethodSummarizeResults)
 	
 	def __init__(self):
 		"""Class initializer.
@@ -42,10 +59,11 @@ class TestBase(object):
 		self.logSystem = log.GetLogInstance()
 		self.reset()
 	
-	def TestAll(self):
+	def TestAll(self, pBatchMode=True):
 		"""Runs all tests in this test module.
 		"""
 		self.reset()
+		self.batchMode = pBatchMode
 		self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
@@ -57,7 +75,7 @@ class TestBase(object):
 								constants.kMethodTestAll)
 		self.summarizeResults()
 	
-	def BatchRun(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose):
+	def RunStandalone(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose, pBatchMode=True):
 		"""Call to run test in batch mode; this is usually the equivalent of main().
 		"""
 		#Prep the log system.
@@ -67,7 +85,7 @@ class TestBase(object):
 		self.logSystem.Attach(listener)
 		
 		#Run all tests.
-		self.TestAll()
+		self.TestAll(pBatchMode)
 		
 		#Shut the log system down now.
 		self.logSystem.Shutdown()
@@ -81,15 +99,32 @@ class TestBase(object):
 		self.logSystem.LogInfo(constants.kFmtTestStarted.format(methodName), constants.kTagTesting, where)
 		self.numTestsAttempted += 1
 		
-		#If we failed...
+		#Get our test result.
 		try:
-			if not testMethod(*testParams):
+			result = testMethod(*testParams)
+			#Did we pass?
+			if result == TestResult.Pass:
+				self.numTestsPassed += 1
+				self.logSystem.LogInfo(constants.kFmtTestPassed.format(methodName), constants.kTagTesting, where)
+			#Did we fail?
+			elif result == TestResult.Fail:
 				#Note the failure.
 				self.numTestsFailed += 1
 				self.logSystem.LogError(constants.kFmtTestFailed.format(methodName), constants.kTagTesting, where)
 				#Raise any exception if we did fail.
 				if raiseIfFailed:
 					raise TestFailedError(methodName)
+			#Did we skip it?
+			elif result == TestResult.Skip:
+				self.numTestsSkipped += 1
+				self.logSystem.LogWarning(constants.kFmtTestSkipped.format(methodName), constants.kTagTesting, where)
+		#Did a sub-test critically fail?
+		except TestFailedError as e:
+			self.numTestsFailed += 1
+			self.logSystem.LogError(constants.kFmtTestSubTestCriticalFailure.format(methodName),
+								constants.kTagTesting,
+								where)
+		#Did an *unexpected* error occur?
 		except Exception as e:
 			#If any unhandled exception occurs, mark this as a failed test.
 			self.numTestsFailed += 1

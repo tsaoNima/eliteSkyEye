@@ -8,6 +8,7 @@ import consoleListener
 import constants
 from structs import LogLevel
 from SkyEye.Testing.testBase import TestBase
+from SkyEye.Testing.testBase import TestResult
 
 class LogTests(TestBase):
 	def testLogging(self):
@@ -41,11 +42,11 @@ class LogTests(TestBase):
 		print "Disconnecting from logger."
 		self.logSystem.DetachAll()
 		
-		return True
+		return TestResult.Pass
 	
 	def onTestAll(self):
 		kMethod = "tests.onTestAll()"
 		self.DoTest(self.testLogging, (), kMethod, True)
 
 if __name__ == "__main__":
-	LogTests().BatchRun()
+	LogTests().RunStandalone()
