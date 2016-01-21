@@ -6,6 +6,7 @@ Created on Jan 20, 2016
 import setupTables
 from SkyEye.Testing.testBase import TestBase
 from SkyEye.Testing.testBase import TestResult
+from server import Server
 
 class ServerTests(TestBase):
 	"""This test will drop any server data! Watch out!
@@ -52,8 +53,16 @@ class ServerTests(TestBase):
 		return TestResult.Pass
 	
 	def testServerLogin(self):
-		self.logSystem.LogWarning("TODO: testServerLogin() not implemented!")
-		return TestResult.Fail
+		#We're testing the server login process; that means we may need to ask for a password.
+		#Fail if we're in batch mode, since we can't ask for a password in that mode.
+		if self.batchMode:
+			self.logSystem.LogError(("testServerLogin() requires interactive prompt,"
+									" but test is in batch mode. Aborting test!"))
+			return TestResult.Fail
+		
+		self.server = Server(self.batchMode)
+		self.server.Login()
+		return TestResult.Pass
 	
 	def testServerFirstTimeSetup(self):
 		#This requires interactive mode; skip if in batch mode.
@@ -62,20 +71,25 @@ class ServerTests(TestBase):
 									" but test is in batch mode. Skipping!"))
 			return TestResult.Skip
 		
-		self.logSystem.LogWarning("TODO: testServerFirstTimeSetup() not implemented!")
-		return TestResult.Fail
+		self.server.FirstTimeSetup()
+		return TestResult.Pass
 	
 	def testServerVerify(self):
-		self.logSystem.LogWarning("TODO: testServerVerify() not implemented!")
-		return TestResult.Fail
+		self.server.VerifyDatabases()
+		return TestResult.Pass
 	
 	def testServerLogout(self):
-		self.logSystem.LogWarning("TODO: testServerLogout() not implemented!")
-		return TestResult.Fail
+		self.server.Logout()
+		self.server = None
+		return TestResult.Pass
 
 	def testServer(self):
-		self.logSystem.LogWarning("TODO: testServer() not implemented!", where="tests.testServer()")
-		
+		#This requires interactive mode for the login test; skip if in batch mode.
+		if self.batchMode:
+			self.logSystem.LogWarning(("testServer() requires interactive prompt,"
+									" but test is in batch mode. Skipping!"))
+			return TestResult.Skip
+				
 		#Test logging in.
 		self.DoTest(self.testServerLogin, raiseIfFailed=True)
 		
