@@ -65,20 +65,71 @@ def verifyOnTableExists(callerContext, subsystemName, db, schema):
 	"""
 	Callback for VerifyDatabases(), called when the requested table exists.
 	"""
-	#Check the individual columns...
+	existingColumns = []
+	#Check column datatype via information_schema.columns on table_name = [our table name].
 	for column in schema.SchemaColumns:
 		#If the column doesn't exist, add to list of problems.
+		if pass:
+			pass
+		else:
 		#Otherwise, check schema details:
 		#	Does the column name match?
 		#	Does the column type match?
 		#	Does the precision match, if precision was specified?
 		#	If the column is NOT NULL in the schema, is it NOT NULL in the table?
-		#Get all constraints relating to this column:
-		#	Does each column's contraint match?
-		#	If constraint is a foreign key, is it to the right table?
+		#Also check for nullability:
+		#	Does this column have a NULL or NOT NULL constraint?
+		#		If so, does it match the is_nullable column in IS.columns?
 		#If any of this fails, add as a problem.
 		pass
+	
+	remainingColumns = []
+	#Get all constraints on the table.
+	#Do UNIQUE/PRIMARY KEY/FOREIGN KEY first via information_schema.table_constraints.
+	#Select the table_constraints rows...
+	pass
+	#For each existing column:
+	for column in existingColumns:
+		#For each constraint on the column:
+		for constraint in column.Constraints:
+			#Uppercase the input now to match server output.
+			casedConstraint = constraint.upper()
+			#Is this not UNIQUE/PRIMARY KEY/FOREIGN KEY?
+			if casedConstraint not in schemas.ConstraintToISConstraintType.keys():
+				#If so, add the column and constraint to next list.
+				remainingColumns.append(column)
+			else:
+				#Otherwise, check the table_constraints table now.
+				#Build the constraint_name: [table name]_[column_name]_[constraint type suffix].
+				pass
+				#Get the constraint_type matching that constraint_name.
+				pass
+				#If it's missing, add a problem.
+				if pass:
+					pass
+				#Does the DB type match schema type?
+				#If not, add a problem.
+				if pass:
+					pass
+				#If constraint is a foreign key, is it to the right table?
+				if pass:
+					#If not, add a problem.
+					if pass:
+						pass
 
+	#Finally, check ON DELETE/UPDATE constraints via information_schema.referential_constraints.
+	#Select our rows...
+	pass
+	#For each remaining column:
+	#Build the constraint_name: [table name]_[column_name]_fkey.
+	#(Only foreign keys can have an ON DELETE/CASCADE.)
+	#	For each remaining constraint on the column:
+	#		Does the RESTRICT/CASCADE option match what's given for our row?
+	#			If not, add a problem.
+	
+	#Return results.
+	pass
+	
 def verifyOnTableDoesNotExist(callerContext, subsystemName, db, schema):
 	"""
 	Callback for VerifyDatabases(), called when the requested table does not exist.

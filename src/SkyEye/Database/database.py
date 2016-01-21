@@ -62,10 +62,10 @@ class Database(object):
 	def buildSingleColumn(self, column):
 		#Does this have precision?
 		precisionStr = ""
-		if len(column) > constants.kSchemaColumnMinElems:
-			precisionStr = constants.kFmtColumnPrecision.format(column[constants.kSchemaColumnPrecisionIdx])
+		if column.Precision > 0:
+			precisionStr = constants.kFmtColumnPrecision.format(column.Precision)
 		#Does this have constraints?
-		constraints = column[constants.kSchemaColumnConstraintIdx]
+		constraints = column.Constraints
 		constraintStr = ""
 		#Build the constraint string, space separating each constraint.
 		if len(constraints) > 0:
@@ -75,8 +75,8 @@ class Database(object):
 			#Convert that into the final constraint string.
 			constraintStr = constants.kFmtColumnConstraints.format(constraintStr)
 		#Now build our column.
-		return constants.kFmtCreateColumn.format(column[constants.kSchemaColumnNameIdx],
-													column[constants.kSchemaColumnTypeIdx],
+		return constants.kFmtCreateColumn.format(column.Name,
+													column.Type,
 													precisionStr,
 													constraintStr)
 	

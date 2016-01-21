@@ -47,7 +47,7 @@ class ServerTests(TestBase):
 		self.DoTest(self.testVerifyDatabases)
 	
 		#Drop all the tables we made.
-		setupTables.DropDatabases(self.user, self.password)
+		#setupTables.DropDatabases(self.user, self.password)
 		
 		return TestResult.Pass
 	

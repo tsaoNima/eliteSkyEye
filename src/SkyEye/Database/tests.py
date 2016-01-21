@@ -10,6 +10,7 @@ from ..Logging import consoleListener
 from SkyEye.Server.schemas import Types
 from SkyEye.Server.schemas import Modifiers
 from SkyEye.Server.schemas import Schema
+from SkyEye.Server.schemas import Column
 import SkyEye.Server.constants
 from SkyEye.Testing.testBase import TestBase
 from SkyEye.Testing.testBase import TestResult
@@ -59,9 +60,9 @@ class DatabaseTests(TestBase):
 			
 	def testCreateTable(self, testTableName):
 		testSchema = Schema(testTableName, (
-						("id", Types.int, (Modifiers.primaryKey,)),
-						("var_char_column", Types.varchar, (Modifiers.notNull,), SkyEye.Server.constants.kSchemaNameLenMax),
-						("bool_column", Types.bool, ())
+						Column("id", Types.int, (Modifiers.primaryKey,)),
+						Column("var_char_column", Types.varchar, (Modifiers.unique,), SkyEye.Server.constants.kSchemaNameLenMax),
+						Column("bool_column", Types.bool, ())
 						))
 		if not self.dbConnection.CreateTable(testSchema):
 			return TestResult.Fail
@@ -73,9 +74,9 @@ class DatabaseTests(TestBase):
 		self.logSystem.LogDebug("Creating table with foreign key...", where=kMethod)
 		relatedSchema = Schema(relatedTableName,
 							(
-							("id", Types.int, (Modifiers.primaryKey,)),
-							("test_table", Types.int, (Modifiers.notNull, (Modifiers.references, testTableName))),
-							("another_column", Types.float, ())
+							Column("id", Types.int, (Modifiers.primaryKey,)),
+							Column("test_table", Types.int, (Modifiers.notNull, (Modifiers.references, testTableName))),
+							Column("another_column", Types.float, ())
 							))
 		if not self.dbConnection.CreateTable(relatedSchema):
 			self.logSystem.LogError("Table w/ foreign key creation failed!", where=kMethod)
