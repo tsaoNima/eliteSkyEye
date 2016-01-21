@@ -61,7 +61,9 @@ class ServerTests(TestBase):
 			return TestResult.Fail
 		
 		self.server = Server(self.batchMode)
-		self.server.Login()
+		if not self.server.Login():
+			return TestResult.Fail
+		
 		return TestResult.Pass
 	
 	def testServerFirstTimeSetup(self):

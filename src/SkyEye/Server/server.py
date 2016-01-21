@@ -185,7 +185,9 @@ class Server(object):
 		rdaConnected = self.rdaDatabase.Connect(constants.kRDADatabaseName,
 								constants.kServerDBAdminName,
 								self.getPassword())
+		
 		self.loggedIn = gdwConnected and rdaConnected
+		
 		#Report if all subsystems could be connected.
 		if self.loggedIn:
 			sLog.LogInfo(constants.kLoginComplete, constants.kTagServer, constants.kMethodLogin)
