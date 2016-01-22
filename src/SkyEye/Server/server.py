@@ -190,6 +190,7 @@ class Server(object):
 		
 		#Report if all subsystems could be connected.
 		if self.loggedIn:
+			self.allDatabases = [self.gdwDatabase, self.rdaDatabase]
 			sLog.LogInfo(constants.kLoginComplete, constants.kTagServer, constants.kMethodLogin)
 		else:
 			sLog.LogError(constants.kErrLoginFailed, constants.kTagServer, constants.kMethodLogin)

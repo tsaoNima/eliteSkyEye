@@ -326,25 +326,24 @@ class Database(object):
 								constants.kFmtErrCreateUserFailed,
 								True)
 	
-	def VerifyTable(self, tableSchema):
-		sLog.LogWarning(constants.kVerifyTableStarting,
-					constants.kTagDatabase,
-					constants.kMethodVerifyTable)
-		results = []
-		
-		existingColumns = []
-		primaryOrUniqueColumns = [column for column in tableSchema.SchemaColumns if
-								Modifiers.unique in column.Constraints or
-								Modifiers.primaryKey in column.Constraints]
-		foreignColumns = [column for column in tableSchema.SchemaColumns if column.ForeignKey]
+	def verifyTableDatatypes(self, tableSchema, results):
 		#Check column datatype via information_schema.columns on table_name = [our table name].
-		datatypeRows = []
-		pass
+		queryStr = constants.kQueryGetTableDatatypeInfo
+		if not self.execute(constants.kMethodVerifyTableDatatypes,
+								queryStr,
+								(tableSchema.SchemaName,),
+								constants.kFmtErrGetTableDatatypeInfoFailed):
+			#Get mad if the query failed.
+			pass
+		datatypeRows = self.cursor.fetchall()
 		for column in tableSchema.SchemaColumns:
 			#If the column doesn't exist in the result set, add to list of problems.
 			rowsForColumn = [row for row in datatypeRows if row[0] == column.Name]
 			if not rowsForColumn:
-				results.append(verificationProblems.ColumnMissing(tableSchema.SchemaName, tableSchema.SchemaColumns))
+				results.append(verificationProblems.ColumnMissing(
+																tableSchema.SchemaName,
+																tableSchema.SchemaColumns
+																))
 			else:
 				assert len(rowsForColumn) == 1
 				rowsForColumn = rowsForColumn[0]
@@ -352,18 +351,18 @@ class Database(object):
 				#Does the column type match (data_type)?
 				if column.Type.lower() != rowsForColumn[pass]
 					#If not, mark mismatch.
-					pass
+					results.append(pass)
 				
 				#If this is a string type or time/timestamp/interval type and precision was specified:
 				if column.Precision > 0 and column.Type in schemas.TypesWithPrecision:
 					#If this is a string type, does the character maximum length match (character_maximum_length)?
 					if column.Type in schemas.StringTypes and column.Precision != rowsForColumn[pass]:
 						#If not, mark mismatch.
-						pass
+						results.append(pass)
 					#Else if this is a time type, does the precision (datetime_precision) match?
 					elif column.Type in schemas.TimeTypes and column.Precision != rowsForColumn[pass]:
 						#If not, mark mismatch.
-						pass
+						results.append(pass)
 					
 				#Also check for nullability:
 				#	Does this column have a NULL or NOT NULL constraint?
@@ -375,14 +374,21 @@ class Database(object):
 					#If so, does it match the is_nullable column in IS.columns?
 					if schemas.ConstraintIsNullable[nullConstraint] != rowsForColumn[pass]:
 						#If not, mark mismatch.
-						pass
-		
+						results.append(pass)
+	
+	def verifyTablePrimaryOrUniqueColumns(self, tableSchema, primaryOrUniqueColumns, results):
 		#Get all constraints on the table.
 		#Do UNIQUE/PRIMARY KEY first via information_schema.table_constraints.
 		#(Use 'public' for constraint_schema and the database name for constraint_catalog.)
 		#Select the table_constraints rows (constraint_name, constraint_type).
-		datatypeRows = []
-		pass
+		queryStr = constants.kQueryGetTablePrimaryOrUniqueInfo
+		if not self.execute(constants.kMethodVerifyTablePrimaryOrUniqueColumns,
+								queryStr,
+								(tableSchema.SchemaName,),
+								constants.kFmtErrGetTablePrimaryOrUniqueInfoFailed):
+			#Get mad if the query failed.
+			pass
+		datatypeRows = self.cursor.fetchall()
 		#For each existing column:
 		for column in primaryOrUniqueColumns:
 			#Get any UNIQUE/PRIMARY KEY markers.
@@ -404,19 +410,27 @@ class Database(object):
 					assert len(constraintRow) <= 1
 					#If it's missing, add a problem.
 					if not constraintRow:
-						pass
+						results.append(pass)
 					else:
 						constraintRow = constraintRow[0]
 						#Does the DB constraint type match schema constraint type?
 						#If not, add a problem.
 						if schemas.ConstraintToISConstraintType[constraint] != constraintRow[pass]:
-							pass
+							results.append(pass)
 	
+	def verifyTableForeignColumns(self, tableSchema, foreignColumns, results):
 		#Finally, check ON DELETE/UPDATE constraints via information_schema.referential_constraints.
 		#Select our rows (constraint_name, unique_constraint_name, update_rule, delete_rule).
 		#(Use 'public' for constraint_schema and the database name for constraint_catalog.)
-		datatypeRows = []
-		pass
+		queryStr = constants.kQueryGetTableForeignInfo
+		parameter = constants.kFmtParamaterConstraintStartsWith.format(tableSchema.SchemaName)
+		if not self.execute(constants.kMethodVerifyTableForeignColumns,
+								queryStr,
+								(parameter,),
+								constants.kFmtErrGetTableForeignInfoFailed):
+			#Get mad if the query failed.
+			pass
+		datatypeRows = self.cursor.fetchall()
 		#For each remaining column:
 		for column in foreignColumns:
 			#Build the constraint_name: [table name]_[column_name]_fkey.
@@ -431,23 +445,38 @@ class Database(object):
 			#	Does the constraint exist?
 			if not constraintRow:
 				#If not, mark it as missing.
-				pass
+				results.append(pass)
 			else:
 				constraintRow = constraintRow[0]
 				#	Does it refer to the right table ([foreign table name]_pkey)?
 				foreignTableName = column.ForeignKey + "_pkey"
 				if not constraintRow[pass] != foreignTableName:
 					#If not, record mismatch.
-					pass
+					results.append(pass)
 				#	Does the RESTRICT/CASCADE option match what's given for our row?
 				onDeleteModifier = RestrictOrCascadeToModifier[schemas.Delete][constraintRow[pass]]
 				if onDeleteModifier and onDeleteModifier not in column.Constraints:
-					#		If not, mark the mismatch.
-					pass
+					#If not, mark the mismatch.
+					results.append(pass)
 				onUpdateModifier = RestrictOrCascadeToModifier[schemas.Delete][constraintRow[pass]]
 				if onUpdateModifier and onUpdateModifier not in column.Constraints:
-					#		If not, mark the mismatch.
-					pass
+					#If not, mark the mismatch.
+					results.append(pass)
+	
+	def VerifyTable(self, tableSchema):
+		sLog.LogWarning(constants.kVerifyTableStarting,
+					constants.kTagDatabase,
+					constants.kMethodVerifyTable)
+		results = []
+		
+		primaryOrUniqueColumns = [column for column in tableSchema.SchemaColumns if
+								Modifiers.unique in column.Constraints or
+								Modifiers.primaryKey in column.Constraints]
+		foreignColumns = [column for column in tableSchema.SchemaColumns if column.ForeignKey]
+		
+		self.verifyTableDatatypes(tableSchema, results)
+		self.verifyTablePrimaryOrUniqueColumns(primaryOrUniqueColumns, results)
+		self.verifyTableForeignColumns(foreignColumns, results)
 		
 		#Return results.
 		if results:
@@ -470,7 +499,7 @@ class Database(object):
 		if self.dbName != databaseDefinition.Name:
 			sLog.LogError(constants.kFmtErrDefinitionNameDoesNotMatch.format(databaseDefinition.Name, self.dbName),
 						constants.kTagDatabase,
-						constants.kMethodSetupDatabase)
+						constants.kMethodVerifyDatabase)
 			return [pass,]
 		
 		sLog.LogWarning(constants.kVerifyAllDatabasesStarting,
