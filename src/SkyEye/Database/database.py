@@ -6,14 +6,16 @@ Created on Jan 15, 2016
 import psycopg2
 import constants
 import verificationProblems
+import SkyEye.Exceptions.exceptions
 import SkyEye.Server.schemas
 from SkyEye.Server.schemas import Modifiers, RestrictOrCascadeToModifier
 from SkyEye.Server.schemas import NonReferentialConstraints
+from SkyEye.Server.schemas import NullConstraints
 from ..Logging import log
 from ..Logging.structs import LogLevel
 from ..Exceptions import exceptions
 from psycopg2.errorcodes import INVALID_PASSWORD
-from SkyEye.Server.schemas import NullConstraints
+from SkyEye.Exceptions.exceptions import InternalServiceError
 
 sLog = log.GetLogInstance()
 
@@ -259,7 +261,7 @@ class Database(object):
 	
 		#Sanity check.
 		if not schema.SchemaName:
-			sLog.LogWarning(constants.kFmtErrBadTableName.format(schema.SchemaName), constants.kTagDatabase, constants.kMethodCreateTable)
+			sLog.LogError(constants.kFmtErrBadTableName.format(schema.SchemaName), constants.kTagDatabase, constants.kMethodCreateTable)
 			return False
 		
 		#Build the CREATE TABLE string.
@@ -326,16 +328,21 @@ class Database(object):
 								constants.kFmtErrCreateUserFailed,
 								True)
 	
+	def getInformationSchemaQueryForTable(self, methodName, queryStr, tableName, failMsg):
+		if not self.execute(methodName,
+								queryStr,
+								(tableName,),
+								failMsg):
+			#Get mad if the query failed.
+			raise InternalServiceError()
+		return self.cursor.fetchall()
+	
 	def verifyTableDatatypes(self, tableSchema, results):
 		#Check column datatype via information_schema.columns on table_name = [our table name].
-		queryStr = constants.kQueryGetTableDatatypeInfo
-		if not self.execute(constants.kMethodVerifyTableDatatypes,
-								queryStr,
-								(tableSchema.SchemaName,),
-								constants.kFmtErrGetTableDatatypeInfoFailed):
-			#Get mad if the query failed.
-			pass
-		datatypeRows = self.cursor.fetchall()
+		datatypeRows = self.getInformationSchemaQueryForTable(constants.kMethodVerifyTableDatatypes,
+															constants.kQueryGetTableDatatypeInfo,
+															tableSchema.SchemaName,
+															constants.kFmtErrGetTableDatatypeInfoFailed)
 		for column in tableSchema.SchemaColumns:
 			#If the column doesn't exist in the result set, add to list of problems.
 			rowsForColumn = [row for row in datatypeRows if row[0] == column.Name]
