@@ -41,8 +41,8 @@ class ColumnSchemaMismatch(VerifyProblem):
 	def __init__(self, columnName, expectedSchema, actualSchema):
 		pCode = kColumnProblem | kElementDoesNotMatchSpec
 		pString = ("Column {0} doesn't match expected schema.",
-									"\n\tExpected column: \"{1}\"",
-									"\n\tActual column: \"{2}\"").format(columnName,
+									"\n\tExpected column value: \"{1}\"",
+									"\n\tActual column value: \"{2}\"").format(columnName,
 																		 expectedSchema,
 																		  actualSchema)
 		super(ColumnSchemaMismatch, self).__init__(pCode, pString)

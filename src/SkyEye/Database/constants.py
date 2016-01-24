@@ -119,7 +119,7 @@ kQueryCreateDatabase = "CREATE DATABASE {0};"
 	0: Database name.
 """
 
-kQueryCreateUser = "CREATE USER {0} with ENCRYPTED PASSWORD '{1}'"
+kQueryCreateUser = "CREATE USER {0} WITH ENCRYPTED PASSWORD '{1}'"
 """Creates the requested user.
 	0: User name.
 	1: User password.
@@ -131,14 +131,4 @@ kFmtUserConnectionLimit = "CONNECTION LIMIT {0}"
 	0: Maximum number of simultaneous connections.
 """
 
-#Verification queries.
-kQueryGetTableDatatypeInfo = ("SELECT column_name, data_type, character_maximum_length, datetime_precision, is_nullable "
-									"FROM information_schema.columns "
-									"WHERE table_name = %s")
-kQueryGetTablePrimaryOrUniqueInfo = ("SELECT constraint_name, constraint_type "
-									"FROM information_schema.table_constraints "
-									"WHERE table_name = %s")
-kQueryGetTableForeignInfo = ("SELECT constraint_name, unique_constraint_name, update_rule, delete_rule "
-							"FROM information_schema.referential_constraints "
-							"WHERE LOWER(constraint_name) LIKE %s")
-kFmtParameterConstraintStartsWith = "{0}%"
+kFmtDatatypeEquals = "data_type = {0}"

@@ -36,6 +36,34 @@ class PasswordMissingError(SkyEyeError):
 	def __init__(self, user=constants.kUnknownUser):
 		self.msg = constants.kFmtErrPasswordMissing.format(user)
 
+class IncompleteCommandError(SkyEyeError):
+	"""Raised if a command does not have enough parameters
+	passed to be evaluatable. 
+	"""
+	
+	def __init__(self, command = None, missingParameters=None):
+		"""
+		Parameters:
+			command: The command to be evaluated as a string. Passed parameters are optional.
+			missingParameters: The parameters that were missing from the command, as a tuple of strings.
+		"""
+		commandStr = constants.kErrIncompleteCommandNameUnknown
+		if command is not None:
+			commandStr = constants.kFmtErrIncompleteCommandName.format(command)
+		parametersStr = constants.kErrIncompleteCommandParametersUnknown
+		if missingParameters is not None:
+			parametersStr = constants.kFmtErrIncompleteCommandParameters.format(missingParameters) 
+			
+		self.msg = constants.kFmtErrIncompleteCommand.format(commandStr, parametersStr)
+
+class InvalidParameterError(SkyEyeError):
+	"""Raised if parameters given to a function are mutually exclusive
+	or set to some forbidden state.
+	"""
+	
+	def __init__(self, msg):
+		self.msg = msg
+
 #Server errors.
 class ServerError(SkyEyeError):
 	"""Base class for problems originating on the server.
