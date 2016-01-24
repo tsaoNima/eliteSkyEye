@@ -8,10 +8,7 @@ import constants
 import queries
 import verificationProblems
 import SkyEye.Exceptions.exceptions
-import SkyEye.Server.schemas
-from SkyEye.Server.schemas import Modifiers, RestrictOrCascadeToModifier
-from SkyEye.Server.schemas import NonReferentialConstraints
-from SkyEye.Server.schemas import NullConstraints
+import SkyEye.Server.schemas as schemas
 from ..Logging import log
 from ..Logging.structs import LogLevel
 from ..Exceptions import exceptions
@@ -27,6 +24,12 @@ def addColumnMissing(self, problemList, tableName, columnName):
 
 def addColumnMismatch(self, problemList, columnName, expectedValue, actualValue):
 	problemList.append(verificationProblems.ColumnSchemaMismatch(columnName, expectedValue, actualValue))
+
+def addConstraintMissing(self, problemList, tableName, columnName, constraintType):
+	problemList.append(verificationProblems.ColumnConstraintMissing(tableName, columnName, constraintType))
+
+def addConstraintMismatch(self, problemList, columnName, constraintType, expectedValue, actualValue):
+	problemList.append(verificationProblems.ColumnSchemaMismatch(columnName, constraintType, expectedValue, actualValue))
 	
 class Database(object):
 	"""Represents a database connection.
@@ -381,6 +384,7 @@ class Database(object):
 				#since we selected by table.
 				assert len(rowsForColumn) == 1
 				rowsForColumn = rowsForColumn[0]
+				
 				#Does the column type match (data_type)?
 				expectedType = column.Type.lower()
 				actualType = rowsForColumn[dataTypeIdx]
@@ -407,7 +411,7 @@ class Database(object):
 				#	Does this column have a NULL or NOT NULL constraint?
 				nullConstraint = [constraint for constraint in column.Constraints if
 								isinstance(constraint, basestring) and constraint in schemas.NullConstraints]
-				assert len(NullConstraints) <= 1
+				assert len(nullConstraint) <= 1
 				if nullConstraint:
 					nullConstraint = nullConstraint[0]
 					#If so, does it match the is_nullable column in IS.columns?
@@ -426,42 +430,43 @@ class Database(object):
 		#Do UNIQUE/PRIMARY KEY first via information_schema.table_constraints.
 		#(Use 'public' for constraint_schema and the database name for constraint_catalog.)
 		#Select the table_constraints rows (constraint_name, constraint_type).
-		queryStr = constants.kQueryGetTablePrimaryOrUniqueInfo
-		if not self.execute(constants.kMethodVerifyTablePrimaryOrUniqueColumns,
-								queryStr,
-								(tableSchema.SchemaName+"%",),
-								constants.kFmtErrGetTablePrimaryOrUniqueInfoFailed):
-			#Get mad if the query failed.
-			pass
-		datatypeRows = self.cursor.fetchall()
+		query = queries.kQueryGetTablePrimaryOrUniqueInfo
+		constraintNameIdx = query.IndexForColumn("constraint_name")
+		constraintTypeIdx = query.IndexForColumn("constraint_type")
+		datatypeRows = self.getInformationSchemaQueryForTable(constants.kMethodVerifyTablePrimaryOrUniqueCols,
+															query.QueryString,
+															tableSchema.SchemaName,
+															constants.kFmtErrGetTablePrimaryOrUniqueColsInfoFailed)
+		
 		#For each existing column:
 		for column in primaryOrUniqueColumns:
 			#Get any UNIQUE/PRIMARY KEY markers.
 			nonReferentialConstraints = [constraint for constraint in column.Constraints if
-								isinstance(constraint, basestring) and constraint in NonReferentialConstraints]
+								isinstance(constraint, basestring) and constraint in schemas.NonReferentialConstraints]
 			#For each such constraint on the column:
 			for constraint in nonReferentialConstraints:
+				#Does said constraint exist?
+				#Build the constraint_name:
+				#[table name]_[column name]_[constraint type suffix].
+				constraintName = schema.SchemaName + 
+								"_" +
+								column.Name +
+								"_" +
+								schemas.ConstraintToISConstraintNameSuffix[constraint]
+				#Get the constraint_type matching that constraint_name.
+				constraintRow = [row for row in datatypeRows if row[constraintNameIdx] == constraintName]
+				assert len(constraintRow) <= 1
+				#If it's missing, add a problem.
+				if not constraintRow:
+					addConstraintMissing(results, column.Name, constraint)
+				#Does the DB constraint type match schema constraint type?
 				else:
-					#Otherwise, check the table_constraints table now.
-					#Build the constraint_name:
-					#[table name]_[column name]_[constraint type suffix].
-					constraintName = (schema.SchemaName
-									 "_"
-									 column.Name
-									 "_"
-									 schemas.ConstraintToISConstraintNameSuffix[constraint])
-					#Get the constraint_type matching that constraint_name.
-					constraintRow = [row for row in datatypeRows if row[pass] == constraintName]
-					assert len(constraintRow) <= 1
-					#If it's missing, add a problem.
-					if not constraintRow:
-						results.append(pass)
-					else:
-						constraintRow = constraintRow[0]
-						#Does the DB constraint type match schema constraint type?
-						#If not, add a problem.
-						if schemas.ConstraintToISConstraintType[constraint] != constraintRow[pass]:
-							results.append(pass)
+					constraintRow = constraintRow[0]
+					expectedValue = schemas.ConstraintToISConstraintType[constraint]
+					actualValue = constraintRow[constraintTypeIdx]
+					#If not, add a problem.
+					if actualValue != expectedValue:
+						addConstraintMismatch(result, column.Name, constraint, expectedValue, actualValue)
 	
 	def verifyTableForeignColumns(self, tableSchema, foreignColumns, results):
 		'''Verifies that all FOREIGN KEY columns in a table
@@ -472,7 +477,7 @@ class Database(object):
 		#Select our rows (constraint_name, unique_constraint_name, update_rule, delete_rule).
 		#(Use 'public' for constraint_schema and the database name for constraint_catalog.)
 		queryStr = constants.kQueryGetTableForeignInfo
-		parameter = constants.kFmtParamaterConstraintStartsWith.format(tableSchema.SchemaName)
+		parameter = constants.kFmtParameterConstraintStartsWith.format(tableSchema.SchemaName)
 		if not self.execute(constants.kMethodVerifyTableForeignColumns,
 								queryStr,
 								(parameter,),
@@ -484,10 +489,7 @@ class Database(object):
 		for column in foreignColumns:
 			#Build the constraint_name: [table name]_[column_name]_fkey.
 			#(Only foreign keys can have an ON DELETE/UPDATE.)
-			constraintName = (schema.SchemaName
-									 "_"
-									 column.Name
-									 "_fkey")
+			constraintName = tableSchema.SchemaName + "_" + column.Name + "_fkey"
 			
 			constraintRow = [row for row in datatypeRows if row[pass] == constraintName]
 			assert len(constraintRow) <= 1
@@ -519,8 +521,8 @@ class Database(object):
 		results = []
 		
 		primaryOrUniqueColumns = [column for column in tableSchema.SchemaColumns if
-								Modifiers.unique in column.Constraints or
-								Modifiers.primaryKey in column.Constraints]
+								schemas.Modifiers.unique in column.Constraints or
+								schemas.Modifiers.primaryKey in column.Constraints]
 		foreignColumns = [column for column in tableSchema.SchemaColumns if column.ForeignKey]
 		
 		self.verifyTableDatatypes(tableSchema, results)

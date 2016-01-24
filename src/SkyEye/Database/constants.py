@@ -22,6 +22,8 @@ kMethodCreateDatabase = "Database.CreateDatabase()"
 kMethodCreateUser = "Database.CreateUser()"
 kMethodVerifyTable = "Database.VerifyTable()"
 kMethodSetupDatabase = "Database.SetupDatabase()"
+kMethodVerifyTableDatatypes = "Database.verifyTableDatatypes()"
+kMethodVerifyTablePrimaryOrUniqueCols = "Database.verifyTablePrimaryOrUniqueColumns()"
 
 #Tags...
 kTagDatabase = "Database"
@@ -52,6 +54,8 @@ kFmtCreatingSuperUser = "Superuser creation requested! Creating superuser {0}"
 kFmtErrCreateUserFailed = "User create failed with error: {0}"
 kFmtErrTableExistsFailed = "Table existence check failed with error: {1}"
 kFmtErrDescribeTableFailed = "Table description failed with error: {0}"
+kFmtErrGetTableDatatypeInfoFailed = "Table datatype retrieval failed with error: {0}" 
+kFmtErrGetTablePrimaryOrUniqueColsInfoFailed = "Table primary/unique column info retrieval failed with error: {0}"
 
 #Queries...
 kQueryDescribeTable = ("SELECT column_name, data_type, character_maximum_length, is_nullable "  

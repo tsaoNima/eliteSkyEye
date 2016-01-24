@@ -46,3 +46,20 @@ class ColumnSchemaMismatch(VerifyProblem):
 																		 expectedSchema,
 																		  actualSchema)
 		super(ColumnSchemaMismatch, self).__init__(pCode, pString)
+		
+class ColumnConstraintMissing(VerifyProblem):
+	def __init__(self, tableName, columnName, constraintType):
+		pCode = kColumnProblem | kElementMissing
+		pString = "Constraint {0} on column {1} of table {2} doesn't exist.".format(constraintType, columnName, tableName)
+		super(ColumnMissing, self).__init__(pCode, pString)
+
+class ColumnConstraintSchemaMismatch(VerifyProblem):
+	def __init__(self, columnName, constraintType, expectedSchema, actualSchema):
+		pCode = kColumnProblem | kElementDoesNotMatchSpec
+		pString = ("Constraint {0} on column {1} doesn't match expected schema.",
+									"\n\tExpected column value: \"{2}\"",
+									"\n\tActual column value: \"{3}\"").format(constraintType,
+																			columnName,
+																			expectedSchema,
+																			actualSchema)
+		super(ColumnSchemaMismatch, self).__init__(pCode, pString)
