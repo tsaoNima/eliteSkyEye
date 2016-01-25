@@ -476,43 +476,45 @@ class Database(object):
 		#Finally, check ON DELETE/UPDATE constraints via information_schema.referential_constraints.
 		#Select our rows (constraint_name, unique_constraint_name, update_rule, delete_rule).
 		#(Use 'public' for constraint_schema and the database name for constraint_catalog.)
-		queryStr = constants.kQueryGetTableForeignInfo
-		parameter = constants.kFmtParameterConstraintStartsWith.format(tableSchema.SchemaName)
-		if not self.execute(constants.kMethodVerifyTableForeignColumns,
-								queryStr,
-								(parameter,),
-								constants.kFmtErrGetTableForeignInfoFailed):
-			#Get mad if the query failed.
-			pass
-		datatypeRows = self.cursor.fetchall()
+		query = queries.kQueryGetTablePrimaryOrUniqueInfo
+		constraintNameIdx = query.IndexForColumn("constraint_name")
+		uniqueConstraintNameIdx = query.IndexForColumn("unique_constraint_name")
+		updateRuleIdx = query.IndexForColumn("update_rule")
+		deleteRuleIdx = query.IndexForColumn("delete_rule")
+		datatypeRows = self.getInformationSchemaQueryForTable(constants.kMethodVerifyTableForeignCols,
+															query.QueryString,
+															tableSchema.SchemaName + "%",
+															constants.kFmtErrGetTableForeignColsInfoFailed)
+		
 		#For each remaining column:
 		for column in foreignColumns:
 			#Build the constraint_name: [table name]_[column_name]_fkey.
 			#(Only foreign keys can have an ON DELETE/UPDATE.)
 			constraintName = tableSchema.SchemaName + "_" + column.Name + "_fkey"
 			
-			constraintRow = [row for row in datatypeRows if row[pass] == constraintName]
+			constraintRow = [row for row in datatypeRows if row[constraintNameIdx] == constraintName]
 			assert len(constraintRow) <= 1
 			#	Does the constraint exist?
 			if not constraintRow:
 				#If not, mark it as missing.
-				results.append(pass)
+				addConstraintMissing(results, tableSchema.SchemaName, column.Name, "FOREIGN_KEY")
 			else:
 				constraintRow = constraintRow[0]
 				#	Does it refer to the right table ([foreign table name]_pkey)?
 				foreignTableName = column.ForeignKey + "_pkey"
-				if not constraintRow[pass] != foreignTableName:
+				actualValue = constraintRow[uniqueConstraintNameIdx]
+				if not actualValue != foreignTableName:
 					#If not, record mismatch.
-					results.append(pass)
+					addConstraintMismatch(results, column.Name, "FOREIGN_KEY", foreignTableName, actualValue)
 				#	Does the RESTRICT/CASCADE option match what's given for our row?
-				onDeleteModifier = RestrictOrCascadeToModifier[schemas.Delete][constraintRow[pass]]
+				onDeleteModifier = schemas.RestrictOrCascadeToModifier[schemas.Delete][constraintRow[deleteRuleIdx]]
 				if onDeleteModifier and onDeleteModifier not in column.Constraints:
 					#If not, mark the mismatch.
-					results.append(pass)
-				onUpdateModifier = RestrictOrCascadeToModifier[schemas.Delete][constraintRow[pass]]
+					addConstraintMissing(results, tableSchema.SchemaName, column.Name, onDeleteModifier)
+				onUpdateModifier = schemas.RestrictOrCascadeToModifier[schemas.Update][constraintRow[updateRuleIdx]]
 				if onUpdateModifier and onUpdateModifier not in column.Constraints:
 					#If not, mark the mismatch.
-					results.append(pass)
+					addConstraintMissing(results, tableSchema.SchemaName, column.Name, onUpdateModifier)
 	
 	def VerifyTable(self, tableSchema):
 		sLog.LogWarning(constants.kVerifyTableStarting,
