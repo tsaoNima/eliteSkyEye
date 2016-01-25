@@ -22,8 +22,10 @@ kMethodCreateDatabase = "Database.CreateDatabase()"
 kMethodCreateUser = "Database.CreateUser()"
 kMethodVerifyTable = "Database.VerifyTable()"
 kMethodSetupDatabase = "Database.SetupDatabase()"
+kMethodVerifyDatabase = "Database.VerifyDatabase()"
 kMethodVerifyTableDatatypes = "Database.verifyTableDatatypes()"
 kMethodVerifyTablePrimaryOrUniqueCols = "Database.verifyTablePrimaryOrUniqueColumns()"
+kMethodVerifyTableForeignCols = "Database.verifyTableForeignColumns()"
 
 #Tags...
 kTagDatabase = "Database"
@@ -56,6 +58,12 @@ kFmtErrTableExistsFailed = "Table existence check failed with error: {1}"
 kFmtErrDescribeTableFailed = "Table description failed with error: {0}"
 kFmtErrGetTableDatatypeInfoFailed = "Table datatype retrieval failed with error: {0}" 
 kFmtErrGetTablePrimaryOrUniqueColsInfoFailed = "Table primary/unique column info retrieval failed with error: {0}"
+kFmtErrGetTableForeignColsInfoFailed = "Table foreign column info retrieval failed with error: {0}"
+kFmtVerifyTableStarting = "Verifying table {0}..."
+kFmtVerifyDatabaseStarting = "Verifying database {0}..."
+kFmtErrDefinitionNameDoesNotMatch = "Database definition is for database {0}, but was passed to database {1}."
+kFmtSetupDatabaseStarting = "Generating database {0} from definition..."
+kFmtErrSetupDatabaseFailed = "Failed to generate database {0}!"
 
 #Queries...
 kQueryDescribeTable = ("SELECT column_name, data_type, character_maximum_length, is_nullable "  

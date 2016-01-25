@@ -87,7 +87,7 @@ class Database(object):
 				constraintStr += constants.kConstraintSeparator + self.buildConstraintString(c)
 			#Also add the foreign key if it exists.
 			if column.ForeignKey:
-				constraintStr += Modifiers.references + constants.kConstraintSeparator + column.ForeignKey
+				constraintStr += schemas.Modifiers.references + constants.kConstraintSeparator + column.ForeignKey
 			#Convert that into the final constraint string.
 			constraintStr = constants.kFmtColumnConstraints.format(constraintStr)
 		#Now build our column.
@@ -448,11 +448,7 @@ class Database(object):
 				#Does said constraint exist?
 				#Build the constraint_name:
 				#[table name]_[column name]_[constraint type suffix].
-				constraintName = schema.SchemaName + 
-								"_" +
-								column.Name +
-								"_" +
-								schemas.ConstraintToISConstraintNameSuffix[constraint]
+				constraintName = tableSchema.SchemaName + "_" + column.Name + "_" + schemas.ConstraintToISConstraintNameSuffix[constraint]
 				#Get the constraint_type matching that constraint_name.
 				constraintRow = [row for row in datatypeRows if row[constraintNameIdx] == constraintName]
 				assert len(constraintRow) <= 1
@@ -466,7 +462,7 @@ class Database(object):
 					actualValue = constraintRow[constraintTypeIdx]
 					#If not, add a problem.
 					if actualValue != expectedValue:
-						addConstraintMismatch(result, column.Name, constraint, expectedValue, actualValue)
+						addConstraintMismatch(results, column.Name, constraint, expectedValue, actualValue)
 	
 	def verifyTableForeignColumns(self, tableSchema, foreignColumns, results):
 		'''Verifies that all FOREIGN KEY columns in a table
@@ -517,7 +513,7 @@ class Database(object):
 					addConstraintMissing(results, tableSchema.SchemaName, column.Name, onUpdateModifier)
 	
 	def VerifyTable(self, tableSchema):
-		sLog.LogWarning(constants.kVerifyTableStarting,
+		sLog.LogWarning(constants.kFmtVerifyTableStarting.format(tableSchema.SchemaName),
 					constants.kTagDatabase,
 					constants.kMethodVerifyTable)
 		results = []
@@ -547,15 +543,14 @@ class Database(object):
 		Raises: 
 			* PasswordInvalidError if the given password can't be used to login. 
 			* InternalServiceError if we could not connect to the database for any other reason.
+			* InvalidParameterError if the database definition's name doesn't match the current database's name.
 		"""
 		#Abort if the definiton's name doesn't match the current connection.
 		if self.dbName != databaseDefinition.Name:
-			sLog.LogError(constants.kFmtErrDefinitionNameDoesNotMatch.format(databaseDefinition.Name, self.dbName),
-						constants.kTagDatabase,
-						constants.kMethodVerifyDatabase)
-			return [pass,]
+			raise exceptions.InvalidParameterError(constants.kFmtErrDefinitionNameDoesNotMatch.format(databaseDefinition.Name,
+																									self.dbName))
 		
-		sLog.LogWarning(constants.kVerifyAllDatabasesStarting,
+		sLog.LogWarning(constants.kFmtVerifyDatabaseStarting.format(self.dbName),
 					constants.kTagDatabase,
 					constants.kMethodVerifyDatabase)
 		
