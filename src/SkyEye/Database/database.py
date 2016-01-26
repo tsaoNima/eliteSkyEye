@@ -7,15 +7,11 @@ import psycopg2
 import constants
 import queries
 import verificationProblems
-import SkyEye.Exceptions.exceptions
 import SkyEye.Server.schemas as schemas
-from ..Logging import log
-from ..Logging.structs import LogLevel
-from ..Exceptions import exceptions
+from SkyEye.Logging import log
+from SkyEye.Logging.structs import LogLevel
+from SkyEye.Exceptions import exceptions
 from psycopg2.errorcodes import INVALID_PASSWORD
-from SkyEye.Exceptions.exceptions import InternalServiceError
-from SkyEye.Database.queries import kQueryGetTableDatatypeInfo
-from SkyEye.Database import verificationProblems
 
 sLog = log.GetLogInstance()
 
@@ -36,12 +32,18 @@ class Database(object):
 	"""
 
 	def execute(self, callerName, query, queryParams, failMsg, failMsgParams = (), runInAutoCommit=False):
-		"""
-		Returns True if query was successful, False otherwise.
+		"""Executes the requested query, passing any given parameters.
+		Parameters: TODO
+		Returns: True if query was successful, False otherwise.
 		failMsg should be a format string where the last parameter is the error string.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
+		
+		#Abort if we don't have a connection.
 		if not self.connected:
 			sLog.LogWarning(constants.kErrNotConnected, constants.kTagDatabase, constants.kMethodExecute)
+			raise exceptions.NotConnectedError()
 			return False
 		try:
 			isolationLevel = self.connection.isolation_level
@@ -65,6 +67,11 @@ class Database(object):
 		return True
 	
 	def executeOnTable(self, callerName, tableName, query, queryParams, failMsg, failMsgParams = (), runInAutocommit=False):
+		"""
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+		"""
+		
 		#Sanity check.
 		if not tableName:
 			sLog.LogWarning(constants.kFmtErrBadTableName.format(tableName), constants.kTagDatabase, constants.kMethodExecuteOnTable)
@@ -73,6 +80,10 @@ class Database(object):
 		return self.execute(callerName, query, queryParams, failMsg, failMsgParams, runInAutocommit)
 	
 	def buildSingleColumn(self, column):
+		"""Generates column information for CREATE TABLE.
+		This function formats a single column's creation line.
+		"""
+		
 		#Does this have precision?
 		precisionStr = ""
 		if column.Precision > 0:
@@ -96,9 +107,12 @@ class Database(object):
 													precisionStr,
 													constraintStr)
 	
-	#Builds a column string based on the given schema.
-	#Returns the column string.
 	def buildColumnString(self, schema):
+		"""Generates column information for CREATE TABLE.
+		This function creates the full parameter list that
+		creates all columns in the table.
+		"""
+		
 		if not schema:
 			return ""
 		#Generally a column goes:
@@ -111,8 +125,10 @@ class Database(object):
 			result += constants.kCreateColumnSeparator + self.buildSingleColumn(column)
 		return result
 	
-	#Throws away all current database references.
 	def abort(self):
+		"""Throws away all current database references.
+		"""
+		
 		sLog.LogVerbose(constants.kAbortingConnection,
 					constants.kTagDatabase,
 					constants.kMethodAbort)
@@ -195,8 +211,10 @@ class Database(object):
 		self.abort()
 	
 	def TableExists(self, tableName):
-		"""Returns True if the requested table exists,
+		"""Returns: True if the requested table exists,
 		False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 		
 		if self.executeOnTable(constants.kMethodTableExists,
@@ -209,8 +227,10 @@ class Database(object):
 
 	def DescribeTable(self, tableName):
 		"""Describes a given table.
-		Returns the table's schema if successful,
+		Returns: The table's schema if successful,
 		or an empty tuple if the table could not be found for any reason.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 		
 		if self.executeOnTable(constants.kMethodDescribeTable,
@@ -223,7 +243,9 @@ class Database(object):
 	
 	def DropTable(self, tableName):
 		"""Attempts to drop the requested table.
-		Returns True if the table was dropped or if the table did not exist, False otherwise.
+		Returns: True if the table was dropped or if the table did not exist, False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 	
 		queryStr = constants.kQueryDropTable.format(tableName)
@@ -238,7 +260,9 @@ class Database(object):
 		
 	def DropDatabase(self, dbName):
 		"""Attempts to drop the requested *database*.
-		Returns True if the table was dropped or if the database did not exist, False otherwise.
+		Returns: True if the table was dropped or if the database did not exist, False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 
 		queryStr = constants.kQueryDropDatabase.format(dbName)
@@ -253,7 +277,9 @@ class Database(object):
 	
 	def DropUser(self, userName):
 		"""Attempts to drop the requested user.
-		Returns True if the user was dropped or if the user did not exist, False otherwise.
+		Returns: True if the user was dropped or if the user did not exist, False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 		
 		queryStr = constants.kQueryDropUser.format(userName)
@@ -268,7 +294,9 @@ class Database(object):
 		
 	def CreateTable(self, schema):
 		"""Attempts to create the requested table with the given schema.
-		Returns True if the table was created, False otherwise.
+		Returns: True if the table was created, False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 	
 		#Sanity check.
@@ -291,7 +319,9 @@ class Database(object):
 		
 	def CreateDatabase(self, dbName):
 		"""Attempts to create the requested database.
-		Returns True if the database was created, False otherwise.
+		Returns: True if the database was created, False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 		
 		#Sanity check.
@@ -310,7 +340,9 @@ class Database(object):
 		
 	def CreateUser(self, userName, userPassword, isSuperUser=False, canCreateDB=False, connectionLimit=-1):
 		"""Attempts to create the requested user.
-		Returns True if the user was created, False otherwise.
+		Returns: True if the user was created, False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 		
 		#Sanity check.
@@ -341,9 +373,11 @@ class Database(object):
 								True)
 	
 	def getInformationSchemaQueryForTable(self, methodName, queryStr, tableName, failMsg):
-		'''Helper function for the following verifyXYZ() functions.
+		"""Helper function for the following verifyXYZ() functions.
 		queryStr is some SQL query that takes a single table name (tableName) as a parameter.
-		'''
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+		"""
 		
 		#Run the specified query.
 		if not self.execute(methodName,
@@ -351,14 +385,17 @@ class Database(object):
 								(tableName,),
 								failMsg):
 			#Get mad if the query failed.
-			raise InternalServiceError()
+			raise exceptions.InternalServiceError()
 		
 		#Otherwise return all rows.
 		return self.cursor.fetchall()
 	
 	def verifyTableDatatypes(self, tableSchema, results):
-		'''Verifies that all columns in the requested table fit the given schema.
-		'''
+		"""Verifies that all columns in the requested table fit the given schema.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+		"""
+		
 		query = queries.kQueryGetTableDatatypeInfo
 		columnNameIdx = query.IndexForColumn("column_name")
 		dataTypeIdx = query.IndexForColumn("data_type")
@@ -422,9 +459,11 @@ class Database(object):
 						addColumnMismatch(results, column.Name + ".is_nullable", expectedValue, actualValue)
 	
 	def verifyTablePrimaryOrUniqueColumns(self, tableSchema, primaryOrUniqueColumns, results):
-		'''Verifies that the requested table has the same PRIMARY KEY/UNIQUE columns
+		"""Verifies that the requested table has the same PRIMARY KEY/UNIQUE columns
 		that were specified in its schema.
-		'''
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+		"""
 		
 		#Get all constraints on the table.
 		#Do UNIQUE/PRIMARY KEY first via information_schema.table_constraints.
@@ -465,9 +504,11 @@ class Database(object):
 						addConstraintMismatch(results, column.Name, constraint, expectedValue, actualValue)
 	
 	def verifyTableForeignColumns(self, tableSchema, foreignColumns, results):
-		'''Verifies that all FOREIGN KEY columns in a table
+		"""Verifies that all FOREIGN KEY columns in a table
 		match their specifications in the table's schema.
-		'''
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+		"""
 		
 		#Finally, check ON DELETE/UPDATE constraints via information_schema.referential_constraints.
 		#Select our rows (constraint_name, unique_constraint_name, update_rule, delete_rule).
@@ -487,42 +528,62 @@ class Database(object):
 			#Build the constraint_name: [table name]_[column_name]_fkey.
 			#(Only foreign keys can have an ON DELETE/UPDATE.)
 			constraintName = tableSchema.SchemaName + "_" + column.Name + "_fkey"
-			
 			constraintRow = [row for row in datatypeRows if row[constraintNameIdx] == constraintName]
 			assert len(constraintRow) <= 1
-			#	Does the constraint exist?
+			
+			#Does the constraint exist?
 			if not constraintRow:
 				#If not, mark it as missing.
 				addConstraintMissing(results, tableSchema.SchemaName, column.Name, "FOREIGN_KEY")
+			#If it does...
 			else:
+				#Does it refer to the right table ([foreign table name]_pkey)?
 				constraintRow = constraintRow[0]
-				#	Does it refer to the right table ([foreign table name]_pkey)?
 				foreignTableName = column.ForeignKey + "_pkey"
+				
 				actualValue = constraintRow[uniqueConstraintNameIdx]
 				if not actualValue != foreignTableName:
 					#If not, record mismatch.
 					addConstraintMismatch(results, column.Name, "FOREIGN_KEY", foreignTableName, actualValue)
-				#	Does the RESTRICT/CASCADE option match what's given for our row?
+					
+				#Does the ON DELETE RESTRICT/CASCADE option match what's given for our row?
 				onDeleteModifier = schemas.RestrictOrCascadeToModifier[schemas.Delete][constraintRow[deleteRuleIdx]]
 				if onDeleteModifier and onDeleteModifier not in column.Constraints:
-					#If not, mark the mismatch.
+					#If the delete modifier doesn't match, mark the mismatch.
 					addConstraintMissing(results, tableSchema.SchemaName, column.Name, onDeleteModifier)
+					
+				#Does the update modifier match?
 				onUpdateModifier = schemas.RestrictOrCascadeToModifier[schemas.Update][constraintRow[updateRuleIdx]]
 				if onUpdateModifier and onUpdateModifier not in column.Constraints:
-					#If not, mark the mismatch.
+					#If the update modifier doesn't match, mark the mismatch.
 					addConstraintMissing(results, tableSchema.SchemaName, column.Name, onUpdateModifier)
 	
 	def VerifyTable(self, tableSchema):
+		"""Checks that the table described by the given schema
+		exists and matches the schema.
+		Each problem is a tuple consisting of the following:
+			1. Database name.
+			2. Table name.
+			3. The problem as an object. Problems have an error code (accessible as ".problemCode")
+			and a detailed error string (accessible as ".problemString" or __str__()). 
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+		"""
+		
+		#This could take a while, warn the user.
 		sLog.LogWarning(constants.kFmtVerifyTableStarting.format(tableSchema.SchemaName),
 					constants.kTagDatabase,
 					constants.kMethodVerifyTable)
 		results = []
 		
+		#Pull out the columns that have PRIMARY KEY/FOREIGN KEY/UNIQUE modifiers.
 		primaryOrUniqueColumns = [column for column in tableSchema.SchemaColumns if
 								schemas.Modifiers.unique in column.Constraints or
 								schemas.Modifiers.primaryKey in column.Constraints]
 		foreignColumns = [column for column in tableSchema.SchemaColumns if column.ForeignKey]
 		
+		#Each part of the schema is listed on totally different INFORMATION_SCHEMA
+		#tables; split the operation along those tables.
 		self.verifyTableDatatypes(tableSchema, results)
 		self.verifyTablePrimaryOrUniqueColumns(primaryOrUniqueColumns, results)
 		self.verifyTableForeignColumns(foreignColumns, results)
@@ -540,10 +601,9 @@ class Database(object):
 			2. Table name.
 			3. The problem as an object. Problems have an error code (accessible as ".problemCode")
 			and a detailed error string (accessible as ".problemString" or __str__()). 
-		Raises: 
-			* PasswordInvalidError if the given password can't be used to login. 
-			* InternalServiceError if we could not connect to the database for any other reason.
-			* InvalidParameterError if the database definition's name doesn't match the current database's name.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+			* InvalidParameterError if the database definition's name doesn't match this database's name.
 		"""
 		#Abort if the definiton's name doesn't match the current connection.
 		if self.dbName != databaseDefinition.Name:
@@ -577,19 +637,21 @@ class Database(object):
 		Returns: True if the database definition's name matches the
 		currently connected database's name and all tables were created.
 		False otherwise.
+		Raises:
+			* NotConnectedError if Database.Connect() has not been successfully called.
+			* InvalidParameterError if the database definition's name doesn't match this database's name.
 		"""
 		#Abort if the definiton's name doesn't match the current connection.
 		if self.dbName != databaseDefinition.Name:
-			sLog.LogError(constants.kFmtErrDefinitionNameDoesNotMatch.format(databaseDefinition.Name, self.dbName),
-						constants.kTagDatabase,
-						constants.kMethodSetupDatabase)
-			return False
+			raise exceptions.InvalidParameterError(constants.kFmtErrDefinitionNameDoesNotMatch.format(databaseDefinition.Name,
+																									self.dbName))
 		
 		#Now setup the tables.
 		sLog.LogDebug(constants.kFmtSetupDatabaseStarting.format(databaseDefinition.Name),
 					constants.kTagDatabase,
 					constants.kMethodSetupDatabase)
 		for tableSchema in databaseDefinition.AllSchemas:
+			#If any table could not be created, log error and abort.
 			if not self.CreateTable(tableSchema):
 				sLog.LogError(constants.kFmtErrSetupDatabaseFailed.format(databaseDefinition.Name),
 						constants.kTagDatabase,

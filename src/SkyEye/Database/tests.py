@@ -4,6 +4,7 @@ Created on Jan 18, 2016
 @author: Me
 '''
 import database
+from SkyEye.Server import schemas
 from ..Logging import log
 from ..Logging.structs import LogLevel
 from ..Logging import consoleListener
@@ -175,8 +176,51 @@ class DatabaseTests(TestBase):
 		
 		return TestResult.Pass
 	
+	def testSetupAndVerifyDB(self, currentDBName):
+		kMethod = "tests.testSetupAndVerifyDB()"
+		kDBDefinition = schemas.DatabaseDefinition()
+		kDBDefinition.Name = currentDBName
+		kDBDefinition.AllSchemas = [
+								Schema("table_1",
+									(
+									Column("id", Types.int, (Modifiers.primaryKey,)),
+									Column("name", Types.varchar, (Modifiers.notNull,), 32),
+									Column("date", Types.timestamp, ())
+									)),
+								Schema("table_2",
+									(
+									Column("id", Types.int, (Modifiers.primaryKey,)),
+									Column("table_1_foreign_a", Types.int, (Modifiers.notNull,), pForeignKey="table_1"),
+									Column("table_1_foreign_b", Types.int, (Modifiers.onUpdateCascade), pForeignKey="table_1"),
+									)),
+								Schema("unrelated_table",
+									(
+									Column("id", Types.int, (Modifiers.primaryKey,)),
+									Column("bool", Types.bool),
+									Column("char", Types.char, 32),
+									Column("float", Types.float, (Modifiers.unique,)),
+									Column("date", Types.date),
+									Column("real", Types.real)
+									))
+								]
+		
+		#First, test setting up the DB.
+		#The DB must exist, of course.
+		if not self.dbConnection.SetupDatabase(kDBDefinition):
+			self.logSystem.LogError("Could not setup database {0}!".format(kDBDefinition.Name), where=kMethod)
+			return TestResult.Fail
+		
+		#Next, test verifying the DB.
+		pass
+		if not self.dbConnection.VerifyDatabase(kDBDefinition):
+			self.logSystem.LogError("Could not verify database {0}!".format(kDBDefinition.Name), where=kMethod)
+			return TestResult.Fail
+		
+		return TestResult.Pass
+	
 	def testDBOps(self):
 		kMethod = "tests.testDBOps()"
+		currentDBName = "testDB"
 		newDBName = "newTestDatabase"
 		
 		#Test creating a database.
@@ -184,6 +228,9 @@ class DatabaseTests(TestBase):
 			
 		#Test dropping a database.
 		self.DoTest(self.testDropDB, (newDBName,), where=kMethod)
+		
+		#Test verifying a database.
+		self.DoTest(self.testSetupAndVerifyDB, (currentDBName,), where=kMethod)
 		
 		return TestResult.Pass
 	

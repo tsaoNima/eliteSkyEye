@@ -6,7 +6,7 @@ Created on Jan 19, 2016
 import constants
 
 class SkyEyeError(Exception):
-	def __init__(self, msg):
+	def __init__(self, msg=constants.kErrBase):
 		self.msg = msg
 		
 	def __str__(self):
@@ -61,33 +61,39 @@ class InvalidParameterError(SkyEyeError):
 	or set to some forbidden state.
 	"""
 	
-	def __init__(self, msg):
+	def __init__(self, msg=constants.kErrInvalidParameter):
 		self.msg = msg
 
 #Server errors.
 class ServerError(SkyEyeError):
 	"""Base class for problems originating on the server.
 	"""
-	def __init__(self, msg):
+	def __init__(self, msg=constants.kErrServerBase):
+		self.msg = msg
+
+class NotConnectedError(SkyEyeError):
+	"""Raised if the operation requires a connection that hasn't been established.
+	"""
+	def __init__(self, msg=constants.kErrNotConnected):
 		self.msg = msg
 
 class InternalServiceError(ServerError):
 	"""Raised if there was a problem connecting server-side code to a server-side service,
 	such as the database.
 	"""
-	def __init__(self, msg):
+	def __init__(self, msg=constants.kErrInternalServiceError):
 		self.msg = msg
 		
 class WrongModeError(ServerError):
 	"""Raised if the server cannot complete an operation in its current mode
 	(batch mode preventing user input, for example).
 	"""
-	def __init__(self, msg):
+	def __init__(self, msg=constants.kErrWrongMode):
 		self.msg = msg
 		
 #Client errors.
 class ClientError(SkyEyeError):
 	"""Base class for problems originating from a client request.
 	"""
-	def __init__(self, msg):
+	def __init__(self, msg=constants.kErrClientBase):
 		self.msg = msg
