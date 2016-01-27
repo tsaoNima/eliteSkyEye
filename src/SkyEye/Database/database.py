@@ -173,7 +173,7 @@ class Database(object):
 	def Connect(self, pDatabase, pUser, pPassword):
 		"""Attempts to connect to the requested database
 		on this machine.
-		Returns True if the connection was successful, False otherwise.
+		Returns: True always; refactor this.
 		Raises:
 			* PaswordInvalidError if the given password was invalid.
 			* InternalServiceError if any other connection error occurred.
@@ -216,7 +216,6 @@ class Database(object):
 						constants.kMethodConnect)
 			self.Disconnect()
 			raise newError
-			return False
 		
 	
 	def Disconnect(self):
@@ -530,7 +529,6 @@ class Database(object):
 				assert len(constraintRow) <= 1
 				#If it's missing, add a problem.
 				if not constraintRow:
-					sLog.LogError(constraintName)
 					addConstraintMissing(results, tableSchema.Name, column.Name, constraint)
 				#Does the DB constraint type match schema constraint type?
 				else:

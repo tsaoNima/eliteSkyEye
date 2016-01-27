@@ -30,16 +30,20 @@ class TestBase(object):
 	def onTestAllInit(self):
 		"""Called before TestAll(), regardless of test success or failure.
 		Standard implementation does nothing.
+		Returns: True if initialization completed without errors
+		and the test module can be run, False otherwise.
 		"""
 		
-		return
+		return True
 	
 	def onTestAllCleanup(self):
 		"""Called after TestAll(), regardless of test success or failure.
 		Standard implementation does nothing.
+		Returns: True if cleanup completed without errors,
+		False otherwise.
 		"""
 		
-		return
+		return True
 	
 	def onTestAll(self):
 		"""Called when TestAll() is called. Must be implemented.
@@ -84,27 +88,35 @@ class TestBase(object):
 							constants.kTagTesting,
 							constants.kMethodTestAll)
 		self.logSystem.LogDebug(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
-		self.onTestAllInit()
-		
-		#Perform the test itself.
-		self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__class__.__name__),
+		shouldRunTests = self.onTestAllInit()
+		if not shouldRunTests:
+			self.logSystem.LogError(constants.kFmtErrInitFailed.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
-		try:
-			self.onTestAll()
-		except TestFailedError:
-			self.logSystem.LogError(constants.kFatalTestFailure,
+		
+		if shouldRunTests:
+			#Perform the test itself.
+			self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__class__.__name__),
 								constants.kTagTesting,
 								constants.kMethodTestAll)
-		self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
-		self.summarizeResults()
+			try:
+				self.onTestAll()
+			except TestFailedError:
+				self.logSystem.LogError(constants.kFatalTestFailure,
+									constants.kTagTesting,
+									constants.kMethodTestAll)
+			self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
+			self.summarizeResults()
 		
-		#Do post-test cleanup.
+		#Always do post-test cleanup.
 		self.logSystem.LogDebug(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
 		self.logSystem.LogDebug(constants.kFmtCleanupStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
-		self.onTestAllCleanup()
+		if not self.onTestAllCleanup():
+			self.logSystem.LogWarning(constants.kFmtWarnCleanupFailed.format(self.__class__.__name__),
+							constants.kTagTesting,
+							constants.kMethodTestAll)
 	
 	def RunStandalone(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose, pBatchMode=True):
 		"""Call to run test in batch mode; this is usually the equivalent of main().

@@ -286,27 +286,35 @@ class DatabaseTests(TestBase):
 		return TestResult.Pass
 	
 	def onTestAllInit(self):
+		result = True
 		#Prep the system; ensure any test databases don't already exist.
 		self.logSystem.LogDebug("Resetting databases for test...")
 		adminDB = database.Database()
 		adminDB.Connect("postgres", "testUser", "testPassword")
-		adminDB.DropDatabase(self.verifyDBName)
-		adminDB.DropDatabase(self.createDBName)
-		adminDB.DropDatabase(self.testDBName)
-		adminDB.CreateDatabase(self.testDBName)
+		result = result and adminDB.DropDatabase(self.verifyDBName)
+		result = result and adminDB.DropDatabase(self.createDBName)
+		result = result and adminDB.DropDatabase(self.testDBName)
+		result = result and adminDB.CreateDatabase(self.testDBName)
 		adminDB.Disconnect()
-		self.logSystem.LogDebug("Test Databases reset.")
+		if result:
+			self.logSystem.LogDebug("Test databases reset.")
+			
+		return result
 	
 	def onTestAllCleanup(self):
 		#Cleanup; delete testDB.
+		result = True
 		self.logSystem.LogDebug("Cleanup - dropping test databases...")
 		adminDB = database.Database()
 		adminDB.Connect("postgres", "testUser", "testPassword")
-		adminDB.DropDatabase(self.verifyDBName)
-		adminDB.DropDatabase(self.createDBName)
-		adminDB.DropDatabase(self.testDBName)
+		result = result and adminDB.DropDatabase(self.verifyDBName)
+		result = result and adminDB.DropDatabase(self.createDBName)
+		result = result and adminDB.DropDatabase(self.testDBName)
 		adminDB.Disconnect()
-		self.logSystem.LogDebug("Test databases dropped.")
+		if result:
+			self.logSystem.LogDebug("Test databases dropped.")
+			
+		return result
 	
 	def onTestAll(self):
 		kMethod = "tests.TestAll()"

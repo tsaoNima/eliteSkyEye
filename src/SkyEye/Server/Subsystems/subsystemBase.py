@@ -50,8 +50,8 @@ class SubsystemBase(object):
 		if self.Definition is None:
 			raise exceptions.InternalServiceError(constants.kErrFmtCreateNeedsDBDefinition.format(self.Name))
 		
-			#Connect to the sysadmin database.
-			adminDB = Database()
+		#Connect to the sysadmin database.
+		adminDB = Database()
 		try:
 			adminDB.Connect(serverConstants.kSysAdminDatabaseName, userName, password)
 			
@@ -83,7 +83,37 @@ class SubsystemBase(object):
 		
 		#Otherwise we're done!
 		return True
+	
+	def Drop(self, userName, password):
+		"""Drops this subsystem's database!
+		Returns: True if the database was dropped, False otherwise.
+		Raises:
+			* InternalServiceError if self.Definition is not set.
+		"""
+		#Abort if no definition is set.
+		if self.Definition is None:
+			raise exceptions.InternalServiceError(constants.kErrFmtCreateNeedsDBDefinition.format(self.Name))
 		
+		#Connect to the sysadmin database.
+		adminDB = Database()
+		try:
+			adminDB.Connect(serverConstants.kSysAdminDatabaseName, userName, password)
+			
+			#Make the CREATE DATABASE call.
+			if not adminDB.DropDatabase(self.Definition.Name):
+				return False
+			
+			#Logout.
+			adminDB.Disconnect()
+		#If anything bad happened, close connection and assume failure.
+		except SkyEyeError as e:
+			sLog.LogError("Unexpected error: {0}".format(e), constants.kTagSubsystemBase, "SubsystemBase.CreateAndSetup()")
+			#Try to disconnect the DB.
+			adminDB.Disconnect()
+			return False
+		
+		return True
+	
 	def Setup(self):
 		"""Calls SetupDatabase on the subsystem. Any existing data may be lost.
 		Returns:

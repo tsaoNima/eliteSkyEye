@@ -35,15 +35,21 @@ class TestSubsystem(SubsystemBase):
 		schema = TestSchema()
 		super(TestSubsystem, self).__init__(schema.Name, schema)
 
+userName = "testUser"
+password = "testPassword"
+
 class SubsystemTests(TestBase):	
+	def __init__(self):
+		super(SubsystemTests, self).__init__()
+		self.subsystem = TestSubsystem()
+	
 	def testCreateAndSetup(self):
-		if not self.subsystem.CreateAndSetup():
+		if not self.subsystem.CreateAndSetup(userName, password):
 			return TestResult.Fail
 		return TestResult.Pass
 	
 	def testStart(self):
-		if not self.subsystem.Start():
-			return TestResult.Fail
+		self.subsystem.Start(userName, password)
 		return TestResult.Pass
 	
 	def testVerify(self):
@@ -57,15 +63,26 @@ class SubsystemTests(TestBase):
 		self.subsystem.Shutdown()
 		return TestResult.Pass
 	
+	def testDrop(self):
+		if not self.subsystem.Drop(userName, password):
+			return TestResult.Fail
+		return TestResult.Pass
+	
+	def onTestAllInit(self):
+		#Ensure the test subsystem's DB doesn't already exist.
+		return self.subsystem.Drop(userName, password)
+		
+	
+	def onTestAllCleanup(self):
+		#Cleanup; delete test subsystem's DB.
+		return self.subsystem.Drop(userName, password)
+	
 	def onTestAll(self):
 		kMethod = "tests.TestAll()"
 		self.logSystem.LogDebug("Please make sure that the server has the following database and SUPERuser:\n"
-					"\tDatabase: testDB\n"
 					"\tUsername: testUser\n"
 					"\tPassword: testPassword\n",
 					where=kMethod)
-		
-		self.subsystem = TestSubsystem()
 		
 		#Create the subsystem.
 		self.DoTest(self.testCreateAndSetup)
@@ -78,6 +95,8 @@ class SubsystemTests(TestBase):
 		
 		#Now shut it down.
 		self.DoTest(self.testShutdown)
+		
+		self.DoTest(self.testDrop)
 	
 if __name__ == "__main__":
 	SubsystemTests().RunStandalone(logLevel=LogLevel.Info)
