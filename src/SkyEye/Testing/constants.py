@@ -10,6 +10,11 @@ kMethodSummarizeResults = "TestBase.summarizeResults()"
 
 kDefaultLogPath = "./testResults.log"
 
+kArgLogLevel = "logLevel"
+kArgLogLevelDefault = "info"
+kArgLogPath = "logPath"
+kArgBatchMode = "batchMode"
+
 kFmtAllTestsStarted = "Running all tests on test module {0}"
 kFatalTestFailure = "Fatal test failure occurred, aborting further tests."
 kAllPassed = "All tests passed."

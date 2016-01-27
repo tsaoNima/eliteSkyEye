@@ -8,6 +8,7 @@ from Logging.consoleListener import ConsoleListener
 from SkyEye import Logging
 from SkyEye import Database
 from SkyEye import Server
+from SkyEye.Server import Subsystems
 
 def main():
 	mLog = log.GetLogInstance()
@@ -19,6 +20,7 @@ def main():
 	mLog.Attach(stdOut)
 	
 	Database.tests.DatabaseTests().TestAll()
+	Subsystems.tests.SubsystemTests().TestAll()
 	Server.tests.ServerTests().TestAll()
 	
 	#Shutdown the logger.

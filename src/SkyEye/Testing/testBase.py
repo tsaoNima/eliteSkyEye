@@ -6,6 +6,7 @@ Created on Jan 20, 2016
 import constants
 import traceback
 import time
+import argparse
 from SkyEye.Logging import log
 from SkyEye.Logging.consoleListener import ConsoleListener
 from SkyEye.Logging.structs import LogLevel
@@ -18,6 +19,21 @@ class TestResult:
 	Fail = 1
 	Skip = 2
 
+testParser = argparse.ArgumentParser("Parses invocations to test modules.")
+testParser.add_argument("-l", "--level",
+					dest=constants.kArgLogLevel,
+					default=constants.kArgLogLevelDefault,
+					help="The minimum log level for this test run")
+testParser.add_argument("-p", "--path",
+					dest=constants.kArgLogPath,
+					default=constants.kDefaultLogPath,
+					help="The output path for the log file")
+testParser.add_argument("-b", "--batch",
+					dest=constants.kArgBatchMode,
+					default=False,
+					action="store_true",
+					help="Run in batch mode")
+
 class TestBase(object):
 	def reset(self):
 		self.numTestsAttempted = 0
@@ -26,6 +42,8 @@ class TestBase(object):
 		self.numTestsSkipped = 0
 		#If true, test should reject any standard input.
 		self.batchMode = True
+		self.logPath = "."
+		self.logLevel = LogLevel.Verbose
 	
 	def onTestAllInit(self):
 		"""Called before TestAll(), regardless of test success or failure.
@@ -71,6 +89,42 @@ class TestBase(object):
 		if self.numTestsPassed == self.numTestsAttempted:
 			self.logSystem.LogInfo(constants.kAllPassed, constants.kTagTesting, constants.kMethodSummarizeResults)
 	
+	def parseTerminalArgs(self):
+		"""Parses any terminal arguments passed
+		during invocation.
+		Returns: True if parsing was successful and execution should continue, False otherwise.
+		"""
+		kLogLevelSynonyms = {
+							"v" : LogLevel.Verbose,
+							"d" : LogLevel.Debug,
+							"i" : LogLevel.Info,
+							"w" : LogLevel.Warning,
+							"e" : LogLevel.Error,
+							"verb" : LogLevel.Verbose,
+							"warn" : LogLevel.Warning,
+							"err" : LogLevel.Error,
+							"verbose" : LogLevel.Verbose,
+							"debug" : LogLevel.Debug,
+							"info" : LogLevel.Info,
+							"warning" : LogLevel.Warning,
+							"error" : LogLevel.Error,
+							}
+		
+		#Get the list of arguments.
+		parsedArgs = testParser.parse_args()
+		parsedLevel = parsedArgs.logLevel.lower()
+		if not parsedLevel in kLogLevelSynonyms:
+			print "Invalid log level, aborting"
+			return False
+		if not parsedArgs.logPath:
+			print "Invalid log path, aborting"
+			return False
+		
+		self.batchMode = parsedArgs.batchMode
+		self.logLevel = kLogLevelSynonyms[parsedLevel]
+		self.logPath = parsedArgs.logPath
+		return True
+	
 	def __init__(self):
 		"""Class initializer.
 		"""
@@ -84,10 +138,10 @@ class TestBase(object):
 		#Do pre-test preparation.
 		self.reset()
 		self.batchMode = pBatchMode
-		self.logSystem.LogDebug(constants.kFmtInitStarted.format(self.__class__.__name__),
+		self.logSystem.LogInfo(constants.kFmtInitStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
-		self.logSystem.LogDebug(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
+		self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
 		shouldRunTests = self.onTestAllInit()
 		if not shouldRunTests:
 			self.logSystem.LogError(constants.kFmtErrInitFailed.format(self.__class__.__name__),
@@ -109,8 +163,8 @@ class TestBase(object):
 			self.summarizeResults()
 		
 		#Always do post-test cleanup.
-		self.logSystem.LogDebug(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
-		self.logSystem.LogDebug(constants.kFmtCleanupStarted.format(self.__class__.__name__),
+		self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
+		self.logSystem.LogInfo(constants.kFmtCleanupStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
 		if not self.onTestAllCleanup():
@@ -121,14 +175,18 @@ class TestBase(object):
 	def RunStandalone(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose, pBatchMode=True):
 		"""Call to run test in batch mode; this is usually the equivalent of main().
 		"""
+		if not self.parseTerminalArgs():
+			print "Can't parse arguments, aborting!"
+			return
+		
 		#Prep the log system.
-		self.logSystem.SetLogFile(logPath)
+		self.logSystem.SetLogFile(self.logPath)
 		listener = ConsoleListener()
-		listener.SetLogLevel(logLevel)
+		listener.SetLogLevel(self.logLevel)
 		self.logSystem.Attach(listener)
 		
 		#Run all tests.
-		self.TestAll(pBatchMode)
+		self.TestAll(self.batchMode)
 		
 		#Shut the log system down now.
 		self.logSystem.Shutdown()
