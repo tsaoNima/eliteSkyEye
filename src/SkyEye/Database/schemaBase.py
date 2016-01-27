@@ -71,7 +71,7 @@ TypesWithPrecision = set(
 					Types.TimestampTimeZone,
 					Types.Time,
 					Types.TimeTimeZone,
-					Types.interval]
+					Types.Interval]
 					)
 
 StringTypes = set(
@@ -86,7 +86,7 @@ TimeTypes = set(
 			Types.Date,
 			Types.Time,
 			Types.TimeTimeZone,
-			Types.interval]
+			Types.Interval]
 			)
 
 NullConstraints = set(
