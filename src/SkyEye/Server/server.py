@@ -5,7 +5,6 @@ Created on Jan 18, 2016
 '''
 import constants
 import psycopg2
-import setupTables
 from .. import genericStrings
 from ..Keychain import constants as KeychainConstants
 from ..Database.database import Database
@@ -13,6 +12,8 @@ from ..Logging import log
 from ..Keychain import keychainOps
 from ..Logging.structs import LogLevel
 from ..Exceptions import exceptions
+from Subsystems.GeoWarehouse.geoWarehouse import GeoWarehouse
+from Subsystems.ReconAnalyzer.reconAnalyzer import ReconAnalyzer
 
 sLog = log.GetLogInstance()
 
@@ -60,7 +61,7 @@ class Server(object):
 		Raises: psycopg2.Error if anything besides an invalid password error occurs.
 		"""
 		try:
-			tempConnect = psycopg2.connect(database=constants.kRDADatabaseName,
+			tempConnect = psycopg2.connect(database=constants.kSysAdminDatabaseName,
 										user=constants.kServerDBAdminName,
 										password=pPassword)
 			tempConnect.close()
@@ -129,13 +130,14 @@ class Server(object):
 	
 	def dropEverything(self, sysAdminDB):
 		"""
+		Drops all data and users!
 		Raises:
 			* InternalServiceError if any data was not successfully dropped.
 		"""
 		#Drop all databases.
-		for subsystem in constants.kSubsystemNames:
-			if not sysAdminDB.DropDatabase(subsystem):
-				raise exceptions.InternalServiceError("Failed to drop database {0}!".format(subsystem))
+		for subsystem in self.subsystems:
+			if not sysAdminDB.DropDatabase(subsystem.Name):
+				raise exceptions.InternalServiceError("Failed to drop database {0}!".format(subsystem.Name))
 		#Drop all users now.
 		if not sysAdminDB.DropUser(constants.kServerDBAdminName):
 			raise exceptions.InternalServiceError("Failed to drop user {0}!".format(constants.kServerDBAdminName))
@@ -162,9 +164,10 @@ class Server(object):
 		self.setupLog(constants.kFirstTimeSetupDBAdminCreated, LogLevel.Debug)
 	
 	def __init__(self, pBatchMode = True):
+		self.subsystems = []
 		#Database connections for subsystems.
-		self.gdwDatabase = Database()
-		self.rdaDatabase = Database()
+		self.subsystems.append(GeoWarehouse())
+		self.subsystems.append(ReconAnalyzer())
 		#If true, server should not accept standard input.
 		self.batchMode = True
 		#If true, server is connected to all internal services.
@@ -179,18 +182,21 @@ class Server(object):
 			return False
 		
 		#Otherwise, connect to the databases with the credentials we got.
-		gdwConnected = self.gdwDatabase.Connect(constants.kGDWDatabaseName,
-								constants.kServerDBAdminName,
-								self.getPassword())
-		rdaConnected = self.rdaDatabase.Connect(constants.kRDADatabaseName,
-								constants.kServerDBAdminName,
-								self.getPassword())
-		
-		self.loggedIn = gdwConnected and rdaConnected
+		allConnected = False
+		user = constants.kServerDBAdminName
+		password = self.getPassword()
+		for subsystem in self.subsystems:
+			try:
+				subsystem.Start(user, password)
+			except exceptions.SkyEyeError as e:
+				allConnected = False
+				break
+			
+		allConnected = True
+		self.loggedIn = allConnected
 		
 		#Report if all subsystems could be connected.
 		if self.loggedIn:
-			self.allDatabases = [self.gdwDatabase, self.rdaDatabase]
 			sLog.LogInfo(constants.kLoginComplete, constants.kTagServer, constants.kMethodLogin)
 		else:
 			sLog.LogError(constants.kErrLoginFailed, constants.kTagServer, constants.kMethodLogin)
@@ -201,15 +207,16 @@ class Server(object):
 		"""
 		
 		#Disconnect from subsystems.
-		self.gdwDatabase.Disconnect()
-		self.rdaDatabase.Disconnect()
+		for subsystem in self.subsystems:
+			subsystem.Shutdown()
+			
 		self.loggedIn = False
 		#Report that we're logged out.
 		sLog.LogInfo(constants.kLogoutComplete, constants.kTagServer, constants.kMethodLogout)
 	
 	def VerifyDatabases(self):
 		"""Checks that all tables in the server match expected schema.
-		Returns: True if all tables match expected schema, False otherwise.
+		Returns: A list of any verification problems with the server's subsystems.
 		Raises:
 			* WrongModeError if we're not actually logged into the server.
 			* PasswordMissingError if we couldn't get the database administrator's password. 
@@ -225,8 +232,14 @@ class Server(object):
 			return False
 		
 		#Perform verification.
-		return setupTables.VerifyDatabases(constants.kServerDBAdminName, self.getPassword())
-	
+		results = []
+		for subsystem in self.subsystems:
+			subsystemResults = subsystem.Verify()
+			if subsystemResults:
+				results.append(subsystemResults)
+				
+		return results
+		
 	def FirstTimeSetup(self):
 		"""Creates database admin account and subsystem databases for the first run.
 		This can drop all existing data; back up any existing data before running this.
@@ -271,19 +284,10 @@ class Server(object):
 		#Logout from server admin!
 		sysAdminDB.Disconnect()
 		
-		#Login as DB admin to the system admin table.
-		sysAdminDB.Connect(constants.kSysAdminDatabaseName,
-						constants.kServerDBAdminName,
-						self.getPassword())
-		#Create subsystem databases.
-		for subsystem in constants.kSubsystemNames:
-			sysAdminDB.CreateDatabase(subsystem)
-		
-		#Logout from the system admin table!
-		sysAdminDB.Disconnect()
-		
-		#Create all default tables.
-		setupTables.SetupDatabases(constants.kServerDBAdminName, self.getPassword())
+		#Now iterate over each subsystem...
+		for subsystem in self.subsystems:
+			#Create the database and set up default tables.
+			subsystem.CreateAndSetup(constants.kSysAdminUserName, sysAdminPW)
 	
 		#We're done!
 		self.setupLog(constants.kFirstTimeSetupComplete, LogLevel.Info)

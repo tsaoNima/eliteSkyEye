@@ -4,15 +4,12 @@ Created on Jan 18, 2016
 @author: Me
 '''
 import database
-from SkyEye.Server import schemas
-from ..Logging import log
+from SkyEye.Database import schemaBase
 from ..Logging.structs import LogLevel
-from ..Logging import consoleListener
-from SkyEye.Server.schemas import Types
-from SkyEye.Server.schemas import Modifiers
-from SkyEye.Server.schemas import Schema
-from SkyEye.Server.schemas import Column
-import SkyEye.Server.constants
+from SkyEye.Database.schemaBase import Types
+from SkyEye.Database.schemaBase import Modifiers
+from SkyEye.Database.schemaBase import TableDefinition
+from SkyEye.Database.schemaBase import Column
 from SkyEye.Testing.testBase import TestBase
 from SkyEye.Testing.testBase import TestResult
 
@@ -60,9 +57,9 @@ class DatabaseTests(TestBase):
 		return TestResult.Pass
 			
 	def testCreateTable(self, testTableName):
-		testSchema = Schema(testTableName, (
+		testSchema = TableDefinition(testTableName, (
 						Column("id", Types.int, (Modifiers.primaryKey,)),
-						Column("var_char_column", Types.varchar, (Modifiers.unique,), SkyEye.Server.constants.kSchemaNameLenMax),
+						Column("var_char_column", Types.varchar, (Modifiers.unique,), 255),
 						Column("bool_column", Types.bool, ())
 						))
 		if not self.dbConnection.CreateTable(testSchema):
@@ -73,7 +70,7 @@ class DatabaseTests(TestBase):
 	def testCreateRelatedTable(self, testTableName, relatedTableName):
 		kMethod = "tests.testCreateRelatedTable()"
 		self.logSystem.LogDebug("Creating table with foreign key...", where=kMethod)
-		relatedSchema = Schema(relatedTableName,
+		relatedSchema = TableDefinition(relatedTableName,
 							(
 							Column("id", Types.int, (Modifiers.primaryKey,)),
 							Column("test_table", Types.int, (Modifiers.notNull, (Modifiers.references, testTableName))),
@@ -178,22 +175,22 @@ class DatabaseTests(TestBase):
 	
 	def testSetupAndVerifyDB(self, currentDBName):
 		kMethod = "tests.testSetupAndVerifyDB()"
-		kDBDefinition = schemas.DatabaseDefinition()
+		kDBDefinition = schemaBase.DatabaseDefinition()
 		kDBDefinition.Name = currentDBName
 		kDBDefinition.AllSchemas = [
-								Schema("table_1",
+								TableDefinition("table_1",
 									(
 									Column("id", Types.int, (Modifiers.primaryKey,)),
 									Column("name", Types.varchar, (Modifiers.notNull,), 32),
 									Column("date", Types.timestamp, ())
 									)),
-								Schema("table_2",
+								TableDefinition("table_2",
 									(
 									Column("id", Types.int, (Modifiers.primaryKey,)),
 									Column("table_1_foreign_a", Types.int, (Modifiers.notNull,), pForeignKey="table_1"),
 									Column("table_1_foreign_b", Types.int, (Modifiers.onUpdateCascade), pForeignKey="table_1"),
 									)),
-								Schema("unrelated_table",
+								TableDefinition("unrelated_table",
 									(
 									Column("id", Types.int, (Modifiers.primaryKey,)),
 									Column("bool", Types.bool),

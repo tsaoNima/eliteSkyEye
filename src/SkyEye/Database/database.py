@@ -7,7 +7,7 @@ import psycopg2
 import constants
 import queries
 import verificationProblems
-import SkyEye.Server.schemas as schemas
+import SkyEye.Database.schemaBase as schemas
 from SkyEye.Logging import log
 from SkyEye.Logging.structs import LogLevel
 from SkyEye.Exceptions import exceptions
@@ -300,15 +300,15 @@ class Database(object):
 		"""
 	
 		#Sanity check.
-		if not schema.SchemaName:
-			sLog.LogError(constants.kFmtErrBadTableName.format(schema.SchemaName), constants.kTagDatabase, constants.kMethodCreateTable)
+		if not schema.Name:
+			sLog.LogError(constants.kFmtErrBadTableName.format(schema.Name), constants.kTagDatabase, constants.kMethodCreateTable)
 			return False
 		
 		#Build the CREATE TABLE string.
-		columns = self.buildColumnString(schema.SchemaColumns)
+		columns = self.buildColumnString(schema.Columns)
 		
 		#Do our query!
-		createString = constants.kFmtQueryCreateTable.format(schema.SchemaName, columns)
+		createString = constants.kFmtQueryCreateTable.format(schema.Name, columns)
 		sLog.LogDebug(constants.kFmtCreatingTable.format(createString),
 					constants.kTagDatabase,
 					constants.kMethodCreateTable)
@@ -406,14 +406,14 @@ class Database(object):
 		#Check column datatype via information_schema.columns on table_name = [our table name].
 		datatypeRows = self.getInformationSchemaQueryForTable(constants.kMethodVerifyTableDatatypes,
 															query.QueryString,
-															tableSchema.SchemaName,
+															tableSchema.Name,
 															constants.kFmtErrGetTableDatatypeInfoFailed)
-		for column in tableSchema.SchemaColumns:
+		for column in tableSchema.Columns:
 			#If the column doesn't exist in the result set,
 			#add it to the list of problems.
 			rowsForColumn = [row for row in datatypeRows if row[columnNameIdx] == column.Name]
 			if not rowsForColumn:
-				addColumnMissing(results, tableSchema.SchemaName, tableSchema.SchemaColumns)
+				addColumnMissing(results, tableSchema.Name, tableSchema.Columns)
 				
 			#Otherwise, check schema details:
 			else:
@@ -474,7 +474,7 @@ class Database(object):
 		constraintTypeIdx = query.IndexForColumn("constraint_type")
 		datatypeRows = self.getInformationSchemaQueryForTable(constants.kMethodVerifyTablePrimaryOrUniqueCols,
 															query.QueryString,
-															tableSchema.SchemaName,
+															tableSchema.Name,
 															constants.kFmtErrGetTablePrimaryOrUniqueColsInfoFailed)
 		
 		#For each existing column:
@@ -487,7 +487,7 @@ class Database(object):
 				#Does said constraint exist?
 				#Build the constraint_name:
 				#[table name]_[column name]_[constraint type suffix].
-				constraintName = tableSchema.SchemaName + "_" + column.Name + "_" + schemas.ConstraintToISConstraintNameSuffix[constraint]
+				constraintName = tableSchema.Name + "_" + column.Name + "_" + schemas.ConstraintToISConstraintNameSuffix[constraint]
 				#Get the constraint_type matching that constraint_name.
 				constraintRow = [row for row in datatypeRows if row[constraintNameIdx] == constraintName]
 				assert len(constraintRow) <= 1
@@ -520,21 +520,21 @@ class Database(object):
 		deleteRuleIdx = query.IndexForColumn("delete_rule")
 		datatypeRows = self.getInformationSchemaQueryForTable(constants.kMethodVerifyTableForeignCols,
 															query.QueryString,
-															tableSchema.SchemaName + "%",
+															tableSchema.Name + "%",
 															constants.kFmtErrGetTableForeignColsInfoFailed)
 		
 		#For each remaining column:
 		for column in foreignColumns:
 			#Build the constraint_name: [table name]_[column_name]_fkey.
 			#(Only foreign keys can have an ON DELETE/UPDATE.)
-			constraintName = tableSchema.SchemaName + "_" + column.Name + "_fkey"
+			constraintName = tableSchema.Name + "_" + column.Name + "_fkey"
 			constraintRow = [row for row in datatypeRows if row[constraintNameIdx] == constraintName]
 			assert len(constraintRow) <= 1
 			
 			#Does the constraint exist?
 			if not constraintRow:
 				#If not, mark it as missing.
-				addConstraintMissing(results, tableSchema.SchemaName, column.Name, "FOREIGN_KEY")
+				addConstraintMissing(results, tableSchema.Name, column.Name, "FOREIGN_KEY")
 			#If it does...
 			else:
 				#Does it refer to the right table ([foreign table name]_pkey)?
@@ -550,13 +550,13 @@ class Database(object):
 				onDeleteModifier = schemas.RestrictOrCascadeToModifier[schemas.Delete][constraintRow[deleteRuleIdx]]
 				if onDeleteModifier and onDeleteModifier not in column.Constraints:
 					#If the delete modifier doesn't match, mark the mismatch.
-					addConstraintMissing(results, tableSchema.SchemaName, column.Name, onDeleteModifier)
+					addConstraintMissing(results, tableSchema.Name, column.Name, onDeleteModifier)
 					
 				#Does the update modifier match?
 				onUpdateModifier = schemas.RestrictOrCascadeToModifier[schemas.Update][constraintRow[updateRuleIdx]]
 				if onUpdateModifier and onUpdateModifier not in column.Constraints:
 					#If the update modifier doesn't match, mark the mismatch.
-					addConstraintMissing(results, tableSchema.SchemaName, column.Name, onUpdateModifier)
+					addConstraintMissing(results, tableSchema.Name, column.Name, onUpdateModifier)
 	
 	def VerifyTable(self, tableSchema):
 		"""Checks that the table described by the given schema
@@ -571,16 +571,16 @@ class Database(object):
 		"""
 		
 		#This could take a while, warn the user.
-		sLog.LogWarning(constants.kFmtVerifyTableStarting.format(tableSchema.SchemaName),
+		sLog.LogWarning(constants.kFmtVerifyTableStarting.format(tableSchema.Name),
 					constants.kTagDatabase,
 					constants.kMethodVerifyTable)
 		results = []
 		
 		#Pull out the columns that have PRIMARY KEY/FOREIGN KEY/UNIQUE modifiers.
-		primaryOrUniqueColumns = [column for column in tableSchema.SchemaColumns if
+		primaryOrUniqueColumns = [column for column in tableSchema.Columns if
 								schemas.Modifiers.unique in column.Constraints or
 								schemas.Modifiers.primaryKey in column.Constraints]
-		foreignColumns = [column for column in tableSchema.SchemaColumns if column.ForeignKey]
+		foreignColumns = [column for column in tableSchema.Columns if column.ForeignKey]
 		
 		#Each part of the schema is listed on totally different INFORMATION_SCHEMA
 		#tables; split the operation along those tables.
@@ -590,7 +590,7 @@ class Database(object):
 		
 		#Return results.
 		if results:
-			results = [verificationProblems.TableSchemaMismatch(tableSchema.SchemaName),].append(results)
+			results = [verificationProblems.TableSchemaMismatch(tableSchema.Name),].append(results)
 		return results
 	
 	def VerifyDatabase(self, databaseDefinition):
@@ -623,12 +623,12 @@ class Database(object):
 		#Now check each table.
 		for tableSchema in databaseDefinition.AllSchemas:
 			#Check that this table exists.
-			if self.TableExists(tableSchema.SchemaName):
+			if self.TableExists(tableSchema.Name):
 				#If it does, check its columns.
 				results.append(self.VerifyTable(tableSchema))
 			else:
 				#Record that the table doesn't exist.
-				results.append(verificationProblems.TableMissing(tableSchema.SchemaName))
+				results.append(verificationProblems.TableMissing(tableSchema.Name))
 		
 		return results
 	

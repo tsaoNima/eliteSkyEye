@@ -3,11 +3,6 @@ Created on Jan 19, 2016
 
 @author: Me
 '''
-kSchemaNameLenMax = 255
-
-kGDWDatabaseName = "geo_data_warehouse"
-kRDADatabaseName = "recon_data_analyzer"
-kSubsystemNames = (kGDWDatabaseName, kRDADatabaseName)
 kServerDBAdminName = "sky_eye_admin"
 
 kSysAdminDatabaseName = "postgres"
@@ -15,6 +10,14 @@ kSysAdminUserName = "postgres"
 
 kPromptNewDBPassword = "Please enter a new password for the database admin account: "
 kMaxNumPrompts = 3
+
+kTagServer = "Server"
+
+kMethodRequestNewCredentials = "Server.requestNewCredentials()"
+kMethodLogin = "Server.Login()"
+kMethodLogout = "Server.Logout()"
+kMethodGetCredentials = "Server.getCredentials()"
+kMethodFirstTimeSetup = "Server.FirstTimeSetup()"
 
 kErrNewCredentialsFailed = "Aborting new credential request!"
 kErrLoginFailed = "Aborting login!"
@@ -36,16 +39,8 @@ kFirstTimeSetupDBAdminCreated = "Database administrator account created."
 kFirstTimeSetupComplete = "Server setup complete. You can now login to the server."
 kFmtErrDBDropFailed = "Failed to drop database {0}!"
 
-kMethodRequestNewCredentials = "Server.requestNewCredentials()"
-kMethodLogin = "Server.Login()"
-kMethodLogout = "Server.Logout()"
-kMethodGetCredentials = "Server.getCredentials()"
-kMethodFirstTimeSetup = "Server.FirstTimeSetup()"
-
-kTagServer = "Server"
-
-kFmtExcDropDatabaseFailed = "Failed to drop database {0}"
-kFmtExcCreateDatabaseFailed = "Failed to create database {0}"
+kFmtExcDropDatabaseFailed = "Failed to drop database {0}!"
+kFmtExcCreateDatabaseFailed = "Failed to create database {0}!"
 kFmtErrDBConnectionFailed = "Couldn't connect to database {0}, aborting!"
 kWarnDroppingAllDatabases = "Dropping all databases!!!"
 kFmtWarnDroppingTablesForDatabase = "Dropping all tables in database {0}!"
@@ -54,15 +49,4 @@ kCreateTablesStarting = "Generating all database tables..."
 kFmtCreatingTablesForDatabase = "Generating tables for database {0}..."
 kVerifyAllDatabasesStarting = "Verifying databases..."
 kFmtVerifyingTablesForDatabase = "Verifying tables for database {0}..."
-kFmtWarnAdminDBConnectionAttempted = "Connection attempted to system administration database by user {0}"
-
-kMethodIterateTables = "setupTables.iterateTables()"
-kMethodConnectToSubsystem = "setupTables.connectToSubsystem()"
-kMethodConnectToAdminDBAndRunOnAllSubsystems = "setupTables.connectToAdminDBAndRunOnAllSubsystems()"
-kMethodVerifyTablesForDatabase = "setupTables.VerifyTablesForDatabase()"
-kMethodDropTablesForDatabase = "setupTables.DropTablesForDatabase()"
-kMethodSetupTablesForDatabase = "setupTables.SetupTablesForDatabase()"
-kMethodVerifyDatabases = "setupTables.VerifyDatabases()"
-kMethodDropDatabases = "setupTables.DropDatabases()"
-kMethodSetupDatabases = "setupTables.SetupDatabases()"
-kTagSetupTables = "SetupTables"
+kFmtWarnAdminDBConnectionAttempted = "Connection attempted to system administration database by user {0}."
