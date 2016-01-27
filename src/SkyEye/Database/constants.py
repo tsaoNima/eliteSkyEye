@@ -64,6 +64,7 @@ kFmtVerifyDatabaseStarting = "Verifying database {0}..."
 kFmtErrDefinitionNameDoesNotMatch = "Database definition is for database {0}, but was passed to database {1}."
 kFmtSetupDatabaseStarting = "Generating database {0} from definition..."
 kFmtErrSetupDatabaseFailed = "Failed to generate database {0}!"
+kFmtErrErrorCodeWas = "Error code: {0}"
 
 #Queries...
 kQueryDescribeTable = ("SELECT column_name, data_type, character_maximum_length, is_nullable "  
@@ -138,6 +139,10 @@ kQueryCreateUser = "CREATE USER {0} WITH ENCRYPTED PASSWORD '{1}'"
 """
 kUserIsSuperUser = "SUPERUSER"
 kUserCanCreateDB = "CREATEDB"
+#"CREATEUSER" is actually an alias for "SUPERUSER";
+#since superusers totally bypass any access restrictions,
+#we don't actually want that.
+kUserCanCreateUsers = "CREATEROLE"
 kFmtUserConnectionLimit = "CONNECTION LIMIT {0}"
 """
 	0: Maximum number of simultaneous connections.

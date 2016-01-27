@@ -3,7 +3,6 @@ Created on Jan 16, 2016
 
 @author: Me
 '''
-import constants
 
 version = (1, 0)
 """Specifies what version of the schema definition this is.
@@ -62,33 +61,33 @@ Note that these are lowercased!
 """
 
 TypesWithPrecision = set(
-					Types.varchar,
+					[Types.varchar,
 					Types.char,
 					Types.timestamp,
 					Types.timestampTimeZone,
 					Types.time,
 					Types.timeTimeZone,
-					Types.interval
+					Types.interval]
 					)
 
 StringTypes = set(
-			Types.varchar,
+			[Types.varchar,
 			Types.char,
-			Types.text
+			Types.text]
 			)
 
 TimeTypes = set(
-			Types.timestamp,
+			[Types.timestamp,
 			Types.timestampTimeZone,
 			Types.date,
 			Types.time,
 			Types.timeTimeZone,
-			Types.interval
+			Types.interval]
 			)
 
 NullConstraints = set(
-					Modifiers.notNull,
-					Modifiers.nullDefault
+					[Modifiers.notNull,
+					Modifiers.nullDefault]
 					)
 
 ConstraintIsNullable = {
@@ -97,16 +96,16 @@ ConstraintIsNullable = {
 					}
 
 NonReferentialConstraints = set(
-					Modifiers.unique,
-					Modifiers.primaryKey
+					[Modifiers.unique,
+					Modifiers.primaryKey]
 					)
 
 ReferentialConstraints = set(
-					Modifiers.references,
+					[Modifiers.references,
 					Modifiers.onDeleteCascade,
 					Modifiers.onDeleteRestrict,
 					Modifiers.onUpdateCascade,
-					Modifiers.onUpdateRestrict
+					Modifiers.onUpdateRestrict]
 					)
 
 Delete = "delete"

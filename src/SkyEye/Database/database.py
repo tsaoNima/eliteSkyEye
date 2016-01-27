@@ -42,7 +42,7 @@ class Database(object):
 		
 		#Abort if we don't have a connection.
 		if not self.connected:
-			sLog.LogWarning(constants.kErrNotConnected, constants.kTagDatabase, constants.kMethodExecute)
+			sLog.LogVerbose(constants.kErrNotConnected, constants.kTagDatabase, constants.kMethodExecute)
 			raise exceptions.NotConnectedError()
 			return False
 		try:
@@ -60,6 +60,7 @@ class Database(object):
 		except psycopg2.Error as e:
 			allParams = failMsgParams + (e,)
 			sLog.LogError(failMsg.format(*allParams), constants.kTagDatabase, callerName)
+			sLog.LogVerbose(constants.kFmtErrErrorCodeWas.format(e.pgcode), constants.kTagDatabase, callerName)
 			self.connection.rollback()
 			return False
 		self.connection.commit()
@@ -79,6 +80,8 @@ class Database(object):
 		
 		return self.execute(callerName, query, queryParams, failMsg, failMsgParams, runInAutocommit)
 	
+	
+	
 	def buildSingleColumn(self, column):
 		"""Generates column information for CREATE TABLE.
 		This function formats a single column's creation line.
@@ -95,11 +98,15 @@ class Database(object):
 		if len(constraints) > 0:
 			constraintStr = constraints[0]
 			for c in constraints[1:]:
-				constraintStr += constants.kConstraintSeparator + self.buildConstraintString(c)
-			#Also add the foreign key if it exists.
-			if column.ForeignKey:
-				constraintStr += schemas.Modifiers.references + constants.kConstraintSeparator + column.ForeignKey
-			#Convert that into the final constraint string.
+				constraintStr += constants.kConstraintSeparator + c
+		#Also add the foreign key if it exists.
+		if column.ForeignKey:
+			leading = ""
+			if len(constraints > 0):
+				leading = constants.kConstraintSeparator
+			constraintStr += leading + schemas.Modifiers.references + constants.kConstraintSeparator + column.ForeignKey
+		#Convert that into the final constraint string.
+		if constraintStr:
 			constraintStr = constants.kFmtColumnConstraints.format(constraintStr)
 		#Now build our column.
 		return constants.kFmtCreateColumn.format(column.Name,
@@ -188,6 +195,9 @@ class Database(object):
 				newError = exceptions.InternalServiceError(str(e))
 			#Abort connection and bubble exception up.
 			sLog.LogError(constants.kFmtErrConnectionFailed.format(pDatabase, port, pUser, e),
+						constants.kTagDatabase,
+						constants.kMethodConnect)
+			sLog.LogVerbose(constants.kFmtErrErrorCodeWas.format(e.pgcode),
 						constants.kTagDatabase,
 						constants.kMethodConnect)
 			self.Disconnect()
@@ -338,7 +348,7 @@ class Database(object):
 								constants.kFmtErrCreateDatabaseFailed,
 								True)
 		
-	def CreateUser(self, userName, userPassword, isSuperUser=False, canCreateDB=False, connectionLimit=-1):
+	def CreateUser(self, userName, userPassword, isSuperUser=False, canCreateDB=False, canCreateUsers=False, connectionLimit=-1):
 		"""Attempts to create the requested user.
 		Returns: True if the user was created, False otherwise.
 		Raises:
@@ -358,8 +368,12 @@ class Database(object):
 			queryStr += " " + constants.kUserIsSuperUser
 			logStr = constants.kFmtCreatingSuperUser.format(userName)
 			logLevel = LogLevel.Warning
-		if canCreateDB:
-			queryStr += " " + constants.kUserCanCreateDB
+		else:
+			if canCreateDB:
+				queryStr += " " + constants.kUserCanCreateDB
+			if canCreateUsers:
+				queryStr += " " + constants.kUserCanCreateUsers
+			
 		if connectionLimit >= 0:
 			queryStr += " " + constants.kFmtUserConnectionLimit.format(connectionLimit)
 		sLog.Log(logStr,

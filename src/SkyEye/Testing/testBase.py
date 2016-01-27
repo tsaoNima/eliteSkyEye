@@ -27,6 +27,20 @@ class TestBase(object):
 		#If true, test should reject any standard input.
 		self.batchMode = True
 	
+	def onTestAllInit(self):
+		"""Called before TestAll(), regardless of test success or failure.
+		Standard implementation does nothing.
+		"""
+		
+		return
+	
+	def onTestAllCleanup(self):
+		"""Called after TestAll(), regardless of test success or failure.
+		Standard implementation does nothing.
+		"""
+		
+		return
+	
 	def onTestAll(self):
 		"""Called when TestAll() is called. Must be implemented.
 		"""
@@ -68,6 +82,7 @@ class TestBase(object):
 		self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
+		self.onTestAllInit()
 		try:
 			self.onTestAll()
 		except TestFailedError:
@@ -75,6 +90,7 @@ class TestBase(object):
 								constants.kTagTesting,
 								constants.kMethodTestAll)
 		self.summarizeResults()
+		self.onTestAllCleanup()
 	
 	def RunStandalone(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose, pBatchMode=True):
 		"""Call to run test in batch mode; this is usually the equivalent of main().

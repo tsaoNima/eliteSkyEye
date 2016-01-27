@@ -15,6 +15,7 @@ from SkyEye.Testing.testBase import TestResult
 
 class DatabaseTests(TestBase):
 	dbConnection = None
+	testDBName = "test_db"
 	
 	def testConnection(self):
 		kMethod = "tests.testConnection()"
@@ -22,7 +23,7 @@ class DatabaseTests(TestBase):
 		
 		self.dbConnection = database.Database()
 		
-		if not self.dbConnection.Connect("testDB", "testUser", "testPassword"):
+		if not self.dbConnection.Connect(self.testDBName, "testUser", "testPassword"):
 			self.logSystem.LogError("Connection failed! Aborting test!", where=kMethod)
 			return TestResult.Fail
 		
@@ -176,7 +177,7 @@ class DatabaseTests(TestBase):
 	def testSetupAndVerifyDB(self, currentDBName):
 		kMethod = "tests.testSetupAndVerifyDB()"
 		kDBDefinition = schemaBase.DatabaseDefinition()
-		kDBDefinition.Name = currentDBName
+		kDBDefinition.Name = "new_db_2"
 		kDBDefinition.AllSchemas = [
 								TableDefinition("table_1",
 									(
@@ -201,23 +202,33 @@ class DatabaseTests(TestBase):
 									))
 								]
 		
+		#Create this new DB.
+		self.dbConnection.CreateDatabase(kDBDefinition.Name)
+		
+		newDB = database.Database()
+		newDB.Connect(kDBDefinition.Name, "testUser", "testPassword")
 		#First, test setting up the DB.
 		#The DB must exist, of course.
-		if not self.dbConnection.SetupDatabase(kDBDefinition):
+		if not newDB.SetupDatabase(kDBDefinition):
 			self.logSystem.LogError("Could not setup database {0}!".format(kDBDefinition.Name), where=kMethod)
 			return TestResult.Fail
 		
 		#Next, test verifying the DB.
 		pass
-		if not self.dbConnection.VerifyDatabase(kDBDefinition):
+		if not newDB.VerifyDatabase(kDBDefinition):
 			self.logSystem.LogError("Could not verify database {0}!".format(kDBDefinition.Name), where=kMethod)
 			return TestResult.Fail
+		
+		newDB.Disconnect()
+		
+		#Drop the DB we made.
+		self.dbConnection.DropDatabase(kDBDefinition.Name)
 		
 		return TestResult.Pass
 	
 	def testDBOps(self):
 		kMethod = "tests.testDBOps()"
-		currentDBName = "testDB"
+		currentDBName = self.testDBName
 		newDBName = "newTestDatabase"
 		
 		#Test creating a database.
@@ -231,10 +242,28 @@ class DatabaseTests(TestBase):
 		
 		return TestResult.Pass
 	
+	def onTestAllInit(self):
+		#Prep the system; ensure testDB doesn't exist.
+		self.logSystem.LogDebug("Resetting testDB for test...")
+		adminDB = database.Database()
+		adminDB.Connect("postgres", "testUser", "testPassword")
+		adminDB.DropDatabase(self.testDBName)
+		adminDB.CreateDatabase(self.testDBName)
+		adminDB.Disconnect()
+		self.logSystem.LogDebug("testDB has been reset.")
+	
+	def onTestAllCleanup(self):
+		#Cleanup; delete testDB.
+		self.logSystem.LogDebug("Cleanup - dropping testDB...")
+		adminDB = database.Database()
+		adminDB.Connect("postgres", "testUser", "testPassword")
+		adminDB.DropDatabase(self.testDBName)
+		adminDB.Disconnect()
+		self.logSystem.LogDebug("testDB has been dropped.")
+	
 	def onTestAll(self):
 		kMethod = "tests.TestAll()"
-		self.logSystem.LogDebug("Please make sure that the server has the following database and SUPERuser:\n"
-					"\tDatabase: testDB\n"
+		self.logSystem.LogDebug("Please make sure that the server has the following SUPERuser:\n"
 					"\tUsername: testUser\n"
 					"\tPassword: testPassword\n",
 					where=kMethod)
@@ -256,4 +285,4 @@ class DatabaseTests(TestBase):
 		self.dbConnection.Disconnect()
 	
 if __name__ == "__main__":
-	DatabaseTests().RunStandalone(logLevel=LogLevel.Info)
+	DatabaseTests().RunStandalone(logLevel=LogLevel.Verbose)
