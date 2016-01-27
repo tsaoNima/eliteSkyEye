@@ -17,16 +17,16 @@ class RDASchemas(DatabaseDefinition):
 		self.Name = "recon_data_analyzer"
 		self.AllSchemas = [
 						TableDefinition("event_types",
-											(Column("id", Types.Int, (Modifiers.primaryKey,)),
-											Column("name", Types.VarChar, (Modifiers.notNull,), kSchemaNameLenMax))
+											(Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+											Column("name", Types.VarChar, (Modifiers.NotNull,), kSchemaNameLenMax))
 											),
 						TableDefinition("player_info",
-											(Column("id", Types.Int, (Modifiers.primaryKey,)),
+											(Column("id", Types.Int, (Modifiers.PrimaryKey,)),
 											Column("user_id", Types.Int, ()),
 											Column("elite_name", Types.VarChar, (), kSchemaNameLenMax))
 											),
 						TableDefinition("events",
-										(Column("id", Types.Int, (Modifiers.primaryKey,)),
-										Column("event_date", Types.Timestamp, (Modifiers.notNull,)))
+										(Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+										Column("event_date", Types.Timestamp, (Modifiers.NotNull,)))
 										)
 						]

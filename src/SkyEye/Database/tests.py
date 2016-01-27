@@ -61,8 +61,8 @@ class DatabaseTests(TestBase):
 			
 	def testCreateTable(self, testTableName):
 		testSchema = TableDefinition(testTableName, (
-						Column("id", Types.Int, (Modifiers.primaryKey,)),
-						Column("var_char_column", Types.VarChar, (Modifiers.unique,), 255),
+						Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+						Column("var_char_column", Types.VarChar, (Modifiers.Unique,), 255),
 						Column("bool_column", Types.Bool, ())
 						))
 		if not self.dbConnection.CreateTable(testSchema):
@@ -75,8 +75,8 @@ class DatabaseTests(TestBase):
 		self.logSystem.LogDebug("Creating table with foreign key...", where=kMethod)
 		relatedSchema = TableDefinition(relatedTableName,
 							(
-							Column("id", Types.Int, (Modifiers.primaryKey,)),
-							Column("test_table", Types.Int, (Modifiers.notNull,), pForeignKey=testTableName),
+							Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+							Column("test_table", Types.Int, (Modifiers.NotNull,), pForeignKey=testTableName),
 							Column("another_column", Types.Float, ())
 							))
 		if not self.dbConnection.CreateTable(relatedSchema):
@@ -185,22 +185,22 @@ class DatabaseTests(TestBase):
 		kDBDefinition.AllSchemas = [
 								TableDefinition("table_1",
 									(
-									Column("id", Types.Int, (Modifiers.primaryKey,)),
-									Column("name", Types.VarChar, (Modifiers.notNull,), 32),
+									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+									Column("name", Types.VarChar, (Modifiers.NotNull,), 32),
 									Column("date", Types.Timestamp, ())
 									)),
 								TableDefinition("table_2",
 									(
-									Column("id", Types.Int, (Modifiers.primaryKey,)),
-									Column("table_1_foreign_a", Types.Int, (Modifiers.notNull,), pForeignKey="table_1"),
+									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+									Column("table_1_foreign_a", Types.Int, (Modifiers.NotNull,), pForeignKey="table_1"),
 									Column("table_1_foreign_b", Types.Int, (Modifiers.onUpdateCascade,), pForeignKey="table_1"),
 									)),
 								TableDefinition("unrelated_table",
 									(
-									Column("id", Types.Int, (Modifiers.primaryKey,)),
+									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
 									Column("bool", Types.Bool),
 									Column("char", Types.Char, 32),
-									Column("float", Types.Float, (Modifiers.unique,)),
+									Column("float", Types.Float, (Modifiers.Unique,)),
 									Column("date", Types.Date),
 									Column("real", Types.Real)
 									))

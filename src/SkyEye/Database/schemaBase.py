@@ -17,6 +17,7 @@ kSchemaNameLenMax = 255
 class Types:
 	"""Specifies the valid SQL data types.
 	"""
+	
 	Int = "INTEGER"
 	Real = "REAL"
 	Float = "DOUBLE PRECISION"
@@ -35,11 +36,10 @@ class Modifiers:
 	"""Specifies valid column modifiers.
 	"""
 	
-	notNull = "NOT NULL"
-	unique = "UNIQUE"
-	primaryKey = "PRIMARY KEY"
-	references = "REFERENCES"
-	nullDefault = "NULL"
+	NotNull = "NOT NULL"
+	Unique = "UNIQUE"
+	PrimaryKey = "PRIMARY KEY"
+	NullDefault = "NULL"
 	
 class DeleteUpdateModifiers:
 	"""Specifies valid modifiers for ON DELETE/ON CASCADE.
@@ -50,17 +50,15 @@ class DeleteUpdateModifiers:
 	Cascade = 2
 
 ConstraintToISConstraintType = {
-							Modifiers.unique : "UNIQUE",
-							Modifiers.primaryKey : "PRIMARY_KEY",
-							Modifiers.references : "FOREIGN_KEY"
+							Modifiers.Unique : "UNIQUE",
+							Modifiers.PrimaryKey : "PRIMARY_KEY"
 							}
 """Maps constraint names to INFORMATION_SCHEMA constraint_type strings.
 """
 
 ConstraintToISConstraintNameSuffix = {
-							Modifiers.unique : "key",
-							Modifiers.primaryKey : "pkey",
-							Modifiers.references : "fkey"
+							Modifiers.Unique : "key",
+							Modifiers.PrimaryKey : "pkey"
 							}
 """Maps constraint names to INFORMATION_SCHEMA constraint_name suffixes.
 Note that these are lowercased!
@@ -92,18 +90,18 @@ TimeTypes = set(
 			)
 
 NullConstraints = set(
-					[Modifiers.notNull,
-					Modifiers.nullDefault]
+					[Modifiers.NotNull,
+					Modifiers.NullDefault]
 					)
 
 ConstraintIsNullable = {
-					Modifiers.notNull : False,
-					Modifiers.nullDefault : True
+					Modifiers.NotNull : False,
+					Modifiers.NullDefault : True
 					}
 
 NonReferentialConstraints = set(
-					[Modifiers.unique,
-					Modifiers.primaryKey]
+					[Modifiers.Unique,
+					Modifiers.PrimaryKey]
 					)
 
 Delete = "delete"

@@ -593,8 +593,8 @@ class Database(object):
 		
 		#Pull out the columns that have PRIMARY KEY/FOREIGN KEY/UNIQUE modifiers.
 		primaryOrUniqueColumns = [column for column in tableSchema.Columns if
-								schemas.Modifiers.unique in column.Constraints or
-								schemas.Modifiers.primaryKey in column.Constraints]
+								schemas.Modifiers.Unique in column.Constraints or
+								schemas.Modifiers.PrimaryKey in column.Constraints]
 		foreignColumns = [column for column in tableSchema.Columns if column.ForeignKey]
 		
 		#Each part of the schema is listed on totally different INFORMATION_SCHEMA
