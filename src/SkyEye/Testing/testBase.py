@@ -77,19 +77,33 @@ class TestBase(object):
 	def TestAll(self, pBatchMode=True):
 		"""Runs all tests in this test module.
 		"""
+		#Do pre-test preparation.
 		self.reset()
 		self.batchMode = pBatchMode
+		self.logSystem.LogDebug(constants.kFmtInitStarted.format(self.__class__.__name__),
+							constants.kTagTesting,
+							constants.kMethodTestAll)
+		self.logSystem.LogDebug(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
+		self.onTestAllInit()
+		
+		#Perform the test itself.
 		self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
-		self.onTestAllInit()
 		try:
 			self.onTestAll()
 		except TestFailedError:
 			self.logSystem.LogError(constants.kFatalTestFailure,
 								constants.kTagTesting,
 								constants.kMethodTestAll)
+		self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
 		self.summarizeResults()
+		
+		#Do post-test cleanup.
+		self.logSystem.LogDebug(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
+		self.logSystem.LogDebug(constants.kFmtCleanupStarted.format(self.__class__.__name__),
+							constants.kTagTesting,
+							constants.kMethodTestAll)
 		self.onTestAllCleanup()
 	
 	def RunStandalone(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose, pBatchMode=True):
@@ -113,47 +127,76 @@ class TestBase(object):
 		"""
 		methodName = testMethod.__name__
 		#Mark that we're running a test.
-		self.logSystem.LogInfo(constants.kFmtTestStarted.format(methodName), constants.kTagTesting, where)
+		self.logSystem.LogInfo(constants.kFmtTestStarted.format(methodName),
+							constants.kTagTesting,
+							where)
+		self.logSystem.LogInfo(constants.kLineSeparator,
+							constants.kTagTesting,
+							where)
 		self.numTestsAttempted += 1
+		
+		testResult = None
+		resultText = ""
+		resultLevel = LogLevel.Info
+		resultException = None
 		
 		#Get our test result.
 		try:
 			#Also see how long it takes, assuming the test passes.
 			startTimeSecs = time.clock()
-			result = testMethod(*testParams)
+			testResult = testMethod(*testParams)
 			endTimeSecs = time.clock()
 			elapsedTimeMs = (endTimeSecs - startTimeSecs) * 1000.0
 			
 			#Did we pass?
-			if result == TestResult.Pass:
-				self.numTestsPassed += 1
-				self.logSystem.LogInfo(constants.kFmtTestPassed.format(methodName, elapsedTimeMs), constants.kTagTesting, where)
+			if testResult == TestResult.Pass:
+				resultText = constants.kFmtTestPassed.format(methodName, elapsedTimeMs)
 			#Did we fail?
-			elif result == TestResult.Fail:
+			elif testResult == TestResult.Fail:
 				#Note the failure.
-				self.numTestsFailed += 1
-				self.logSystem.LogError(constants.kFmtTestFailed.format(methodName), constants.kTagTesting, where)
+				resultText = constants.kFmtTestFailed.format(methodName)
 				#Raise any exception if we did fail.
 				if raiseIfFailed:
-					raise TestFailedError(methodName)
+					resultException = TestFailedError(methodName)
 			#Did we skip it?
-			elif result == TestResult.Skip:
-				self.numTestsSkipped += 1
-				self.logSystem.LogWarning(constants.kFmtTestSkipped.format(methodName), constants.kTagTesting, where)
+			elif testResult == TestResult.Skip:
+				resultText = constants.kFmtTestSkipped.format(methodName)
 		
 		#Did a sub-test critically fail?
 		except TestFailedError as e:
-			self.numTestsFailed += 1
-			self.logSystem.LogError(constants.kFmtTestSubTestCriticalFailure.format(methodName),
-								constants.kTagTesting,
-								where)
+			testResult = TestResult.Fail
+			resultText = constants.kFmtTestSubTestCriticalFailure.format(methodName)
 		#Did an *unexpected* error occur?
 		except Exception as e:
 			#If any unhandled exception occurs, mark this as a failed test.
-			self.numTestsFailed += 1
-			self.logSystem.LogError(constants.kFmtTestUnhandledFailure.format(methodName, e, traceback.format_exc()),
-								constants.kTagTesting,
-								where)
+			testResult = TestResult.Fail
+			resultText = constants.kFmtTestUnhandledFailure.format(methodName,
+																e,
+																traceback.format_exc())
 			#Definitely raise an exception now, since this would ordinarily be fatal to the app.
-			raise TestFailedError(methodName)
+			resultException = TestFailedError(methodName)
+			
+		#Now spit this info out to the logs.
+		#Do level-specific actions.
+		if testResult == TestResult.Pass:
+			resultLevel = LogLevel.Info
+			self.numTestsPassed += 1
+		elif testResult == TestResult.Fail:
+			resultLevel = LogLevel.Error
+			self.numTestsFailed += 1
+		elif testResult == TestResult.Skip:
+			resultLevel = LogLevel.Warning
+			self.numTestsSkipped += 1
+		
+		self.logSystem.Log(constants.kLineSeparator,
+							resultLevel,
+							constants.kTagTesting,
+							where)
+		self.logSystem.Log(resultText,
+							resultLevel,
+							constants.kTagTesting,
+							where)
+		#If any exception exists, raise it.
+		if resultException is not None:
+			raise resultException
 			

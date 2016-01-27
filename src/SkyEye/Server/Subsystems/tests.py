@@ -16,17 +16,17 @@ class TestSchema(schemaBase.DatabaseDefinition):
 		self.Name = "test_db_1"
 		self.AllSchemas = [
 						schemaBase.TableDefinition("test_table_1",
-											(schemaBase.Column("id", schemaBase.Types.int, (schemaBase.Modifiers.primaryKey,)),
-											schemaBase.Column("name", schemaBase.Types.varchar, (schemaBase.Modifiers.notNull,), schemaBase.kSchemaNameLenMax))
+											(schemaBase.Column("id", schemaBase.Types.Int, (schemaBase.Modifiers.primaryKey,)),
+											schemaBase.Column("name", schemaBase.Types.VarChar, (schemaBase.Modifiers.notNull,), schemaBase.kSchemaNameLenMax))
 											),
 						schemaBase.TableDefinition("test_table_2",
-											(schemaBase.Column("id", schemaBase.Types.int, (schemaBase.Modifiers.primaryKey,)),
-											schemaBase.Column("user_id", schemaBase.Types.int, ()),
-											schemaBase.Column("elite_name", schemaBase.Types.varchar, (), schemaBase.kSchemaNameLenMax))
+											(schemaBase.Column("id", schemaBase.Types.Int, (schemaBase.Modifiers.primaryKey,)),
+											schemaBase.Column("user_id", schemaBase.Types.Int, ()),
+											schemaBase.Column("elite_name", schemaBase.Types.VarChar, (), schemaBase.kSchemaNameLenMax))
 											),
 						schemaBase.TableDefinition("events",
-										(schemaBase.Column("id", schemaBase.Types.int, (schemaBase.Modifiers.primaryKey,)),
-										schemaBase.Column("event_date", schemaBase.Types.timestamp, (schemaBase.Modifiers.notNull,)))
+										(schemaBase.Column("id", schemaBase.Types.Int, (schemaBase.Modifiers.primaryKey,)),
+										schemaBase.Column("event_date", schemaBase.Types.Timestamp, (schemaBase.Modifiers.notNull,)))
 										)
 						]
 

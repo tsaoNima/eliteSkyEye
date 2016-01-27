@@ -58,6 +58,7 @@ class Database(object):
 			self.connection.set_isolation_level(isolationLevel)
 			
 		except psycopg2.Error as e:
+			#If failMsgParams is not a tuple, make it a tuple.
 			allParams = failMsgParams + (e,)
 			sLog.LogError(failMsg.format(*allParams), constants.kTagDatabase, callerName)
 			sLog.LogVerbose(constants.kFmtErrErrorCodeWas.format(e.pgcode), constants.kTagDatabase, callerName)
@@ -98,11 +99,11 @@ class Database(object):
 		if len(constraints) > 0:
 			constraintStr = constraints[0]
 			for c in constraints[1:]:
-				constraintStr += constants.kConstraintSeparator + c
+				constraintStr += constants.kConstraintSeparator + str(c)
 		#Also add the foreign key if it exists.
 		if column.ForeignKey:
 			leading = ""
-			if len(constraints > 0):
+			if len(constraints) > 0:
 				leading = constants.kConstraintSeparator
 			constraintStr += leading + schemas.Modifiers.references + constants.kConstraintSeparator + column.ForeignKey
 		#Convert that into the final constraint string.
@@ -283,7 +284,7 @@ class Database(object):
 								queryStr,
 								(),
 								constants.kFmtErrDropDatabaseFailed,
-								True)
+								runInAutoCommit = True)
 	
 	def DropUser(self, userName):
 		"""Attempts to drop the requested user.
@@ -300,7 +301,7 @@ class Database(object):
 								queryStr,
 								(),
 								constants.kFmtErrDropUserFailed,
-								True)
+								runInAutoCommit = True)
 		
 	def CreateTable(self, schema):
 		"""Attempts to create the requested table with the given schema.
@@ -346,7 +347,7 @@ class Database(object):
 								queryStr,
 								(),
 								constants.kFmtErrCreateDatabaseFailed,
-								True)
+								runInAutoCommit = True)
 		
 	def CreateUser(self, userName, userPassword, isSuperUser=False, canCreateDB=False, canCreateUsers=False, connectionLimit=-1):
 		"""Attempts to create the requested user.
@@ -384,7 +385,7 @@ class Database(object):
 								queryStr,
 								(),
 								constants.kFmtErrCreateUserFailed,
-								True)
+								runInAutoCommit = True)
 	
 	def getInformationSchemaQueryForTable(self, methodName, queryStr, tableName, failMsg):
 		"""Helper function for the following verifyXYZ() functions.

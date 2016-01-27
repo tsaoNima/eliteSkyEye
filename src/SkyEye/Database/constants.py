@@ -149,3 +149,9 @@ kFmtUserConnectionLimit = "CONNECTION LIMIT {0}"
 """
 
 kFmtDatatypeEquals = "data_type = {0}"
+
+kTagSchemaBase = "SchemaBase"
+
+kMethodColumnInit = "Column.__init__()"
+
+kFmtWarnCoercingConstraintString = "Constraint was a string '{0}' instead of a tuple; did you miss a comma?\nCoercing to 1-tuple"

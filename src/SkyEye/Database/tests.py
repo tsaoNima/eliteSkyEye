@@ -16,6 +16,8 @@ from SkyEye.Testing.testBase import TestResult
 class DatabaseTests(TestBase):
 	dbConnection = None
 	testDBName = "test_db"
+	createDBName = "new_db"
+	verifyDBName = "new_db_2"
 	
 	def testConnection(self):
 		kMethod = "tests.testConnection()"
@@ -59,9 +61,9 @@ class DatabaseTests(TestBase):
 			
 	def testCreateTable(self, testTableName):
 		testSchema = TableDefinition(testTableName, (
-						Column("id", Types.int, (Modifiers.primaryKey,)),
-						Column("var_char_column", Types.varchar, (Modifiers.unique,), 255),
-						Column("bool_column", Types.bool, ())
+						Column("id", Types.Int, (Modifiers.primaryKey,)),
+						Column("var_char_column", Types.VarChar, (Modifiers.unique,), 255),
+						Column("bool_column", Types.Bool, ())
 						))
 		if not self.dbConnection.CreateTable(testSchema):
 			return TestResult.Fail
@@ -73,9 +75,9 @@ class DatabaseTests(TestBase):
 		self.logSystem.LogDebug("Creating table with foreign key...", where=kMethod)
 		relatedSchema = TableDefinition(relatedTableName,
 							(
-							Column("id", Types.int, (Modifiers.primaryKey,)),
-							Column("test_table", Types.int, (Modifiers.notNull, (Modifiers.references, testTableName))),
-							Column("another_column", Types.float, ())
+							Column("id", Types.Int, (Modifiers.primaryKey,)),
+							Column("test_table", Types.Int, (Modifiers.notNull,), pForeignKey=testTableName),
+							Column("another_column", Types.Float, ())
 							))
 		if not self.dbConnection.CreateTable(relatedSchema):
 			self.logSystem.LogError("Table w/ foreign key creation failed!", where=kMethod)
@@ -156,49 +158,51 @@ class DatabaseTests(TestBase):
 			
 		return TestResult.Pass
 	
-	def testCreateDB(self, newDBName):
+	def testCreateDB(self):
 		kMethod = "tests.testCreateDB()"
 		
-		if not self.dbConnection.CreateDatabase(newDBName):
-			self.logSystem.LogError("Could not create database {0}!".format(newDBName), where=kMethod)
+		if not self.dbConnection.CreateDatabase(self.createDBName):
+			self.logSystem.LogError("Could not create database {0}!".format(self.createDBName),
+								where=kMethod)
 			return TestResult.Fail
 		
 		return TestResult.Pass
 	
-	def testDropDB(self, newDBName):
+	def testDropDB(self):
 		kMethod = "tests.testDropDB()"
 		
-		if not self.dbConnection.DropDatabase(newDBName):
-			self.logSystem.LogError("Could not drop database {0}!".format(newDBName), where=kMethod)
+		if not self.dbConnection.DropDatabase(self.createDBName):
+			self.logSystem.LogError("Could not drop database {0}!".format(self.createDBName),
+								where=kMethod)
 			return TestResult.Fail
 		
 		return TestResult.Pass
 	
-	def testSetupAndVerifyDB(self, currentDBName):
+	def testSetupAndVerifyDB(self):
 		kMethod = "tests.testSetupAndVerifyDB()"
 		kDBDefinition = schemaBase.DatabaseDefinition()
-		kDBDefinition.Name = "new_db_2"
+		kDBDefinition.Name = self.verifyDBName
 		kDBDefinition.AllSchemas = [
 								TableDefinition("table_1",
 									(
-									Column("id", Types.int, (Modifiers.primaryKey,)),
-									Column("name", Types.varchar, (Modifiers.notNull,), 32),
-									Column("date", Types.timestamp, ())
+									Column("id", Types.Int, (Modifiers.primaryKey,)),
+									Column("name", Types.VarChar, (Modifiers.notNull,), 32),
+									Column("date", Types.Timestamp, ())
 									)),
 								TableDefinition("table_2",
 									(
-									Column("id", Types.int, (Modifiers.primaryKey,)),
-									Column("table_1_foreign_a", Types.int, (Modifiers.notNull,), pForeignKey="table_1"),
-									Column("table_1_foreign_b", Types.int, (Modifiers.onUpdateCascade), pForeignKey="table_1"),
+									Column("id", Types.Int, (Modifiers.primaryKey,)),
+									Column("table_1_foreign_a", Types.Int, (Modifiers.notNull,), pForeignKey="table_1"),
+									Column("table_1_foreign_b", Types.Int, (Modifiers.onUpdateCascade,), pForeignKey="table_1"),
 									)),
 								TableDefinition("unrelated_table",
 									(
-									Column("id", Types.int, (Modifiers.primaryKey,)),
-									Column("bool", Types.bool),
-									Column("char", Types.char, 32),
-									Column("float", Types.float, (Modifiers.unique,)),
-									Column("date", Types.date),
-									Column("real", Types.real)
+									Column("id", Types.Int, (Modifiers.primaryKey,)),
+									Column("bool", Types.Bool),
+									Column("char", Types.Char, 32),
+									Column("float", Types.Float, (Modifiers.unique,)),
+									Column("date", Types.Date),
+									Column("real", Types.Real)
 									))
 								]
 		
@@ -228,38 +232,40 @@ class DatabaseTests(TestBase):
 	
 	def testDBOps(self):
 		kMethod = "tests.testDBOps()"
-		currentDBName = self.testDBName
-		newDBName = "newTestDatabase"
 		
 		#Test creating a database.
-		self.DoTest(self.testCreateDB, (newDBName,), where=kMethod)
+		self.DoTest(self.testCreateDB, where=kMethod)
 			
 		#Test dropping a database.
-		self.DoTest(self.testDropDB, (newDBName,), where=kMethod)
+		self.DoTest(self.testDropDB, where=kMethod)
 		
 		#Test verifying a database.
-		self.DoTest(self.testSetupAndVerifyDB, (currentDBName,), where=kMethod)
+		self.DoTest(self.testSetupAndVerifyDB, where=kMethod)
 		
 		return TestResult.Pass
 	
 	def onTestAllInit(self):
-		#Prep the system; ensure testDB doesn't exist.
-		self.logSystem.LogDebug("Resetting testDB for test...")
+		#Prep the system; ensure any test databases don't already exist.
+		self.logSystem.LogDebug("Resetting databases for test...")
 		adminDB = database.Database()
 		adminDB.Connect("postgres", "testUser", "testPassword")
+		adminDB.DropDatabase(self.verifyDBName)
+		adminDB.DropDatabase(self.createDBName)
 		adminDB.DropDatabase(self.testDBName)
 		adminDB.CreateDatabase(self.testDBName)
 		adminDB.Disconnect()
-		self.logSystem.LogDebug("testDB has been reset.")
+		self.logSystem.LogDebug("Test Databases reset.")
 	
 	def onTestAllCleanup(self):
 		#Cleanup; delete testDB.
-		self.logSystem.LogDebug("Cleanup - dropping testDB...")
+		self.logSystem.LogDebug("Cleanup - dropping test databases...")
 		adminDB = database.Database()
 		adminDB.Connect("postgres", "testUser", "testPassword")
+		adminDB.DropDatabase(self.verifyDBName)
+		adminDB.DropDatabase(self.createDBName)
 		adminDB.DropDatabase(self.testDBName)
 		adminDB.Disconnect()
-		self.logSystem.LogDebug("testDB has been dropped.")
+		self.logSystem.LogDebug("Test databases dropped.")
 	
 	def onTestAll(self):
 		kMethod = "tests.TestAll()"

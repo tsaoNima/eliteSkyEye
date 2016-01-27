@@ -3,6 +3,8 @@ Created on Jan 16, 2016
 
 @author: Me
 '''
+from SkyEye.Logging import log
+import constants
 
 version = (1, 0)
 """Specifies what version of the schema definition this is.
@@ -15,19 +17,19 @@ kSchemaNameLenMax = 255
 class Types:
 	"""Specifies the valid SQL data types.
 	"""
-	int = "INTEGER"
-	real = "REAL"
-	float = "DOUBLE PRECISION"
-	bool = "BOOLEAN"
-	varchar = "CHARACTER VARYING"
-	char = "CHARACTER"
-	text = "TEXT"
-	timestamp = "TIMESTAMP"
-	timestampTimeZone = "TIMESTAMP WITH TIME ZONE"
-	date = "DATE"
-	time = "TIME"
-	timeTimeZone = "TIME WITH TIME ZONE"
-	interval = "INTERVAL"
+	Int = "INTEGER"
+	Real = "REAL"
+	Float = "DOUBLE PRECISION"
+	Bool = "BOOLEAN"
+	VarChar = "CHARACTER VARYING"
+	Char = "CHARACTER"
+	Text = "TEXT"
+	Timestamp = "TIMESTAMP"
+	TimestampTimeZone = "TIMESTAMP WITH TIME ZONE"
+	Date = "DATE"
+	Time = "TIME"
+	TimeTimeZone = "TIME WITH TIME ZONE"
+	Interval = "INTERVAL"
 
 class Modifiers:
 	"""Specifies valid column modifiers.
@@ -37,11 +39,15 @@ class Modifiers:
 	unique = "UNIQUE"
 	primaryKey = "PRIMARY KEY"
 	references = "REFERENCES"
-	onDeleteRestrict = "ON DELETE RESTRICT"
-	onDeleteCascade = "ON DELETE CASCADE"
-	onUpdateRestrict = "ON UPDATE RESTRICT"
-	onUpdateCascade = "ON UPDATE CASCADE"
 	nullDefault = "NULL"
+	
+class DeleteUpdateModifiers:
+	"""Specifies valid modifiers for ON DELETE/ON CASCADE.
+	"""
+	
+	NoAction = 0
+	Restrict = 1
+	Cascade = 2
 
 ConstraintToISConstraintType = {
 							Modifiers.unique : "UNIQUE",
@@ -61,27 +67,27 @@ Note that these are lowercased!
 """
 
 TypesWithPrecision = set(
-					[Types.varchar,
-					Types.char,
-					Types.timestamp,
-					Types.timestampTimeZone,
-					Types.time,
-					Types.timeTimeZone,
+					[Types.VarChar,
+					Types.Char,
+					Types.Timestamp,
+					Types.TimestampTimeZone,
+					Types.Time,
+					Types.TimeTimeZone,
 					Types.interval]
 					)
 
 StringTypes = set(
-			[Types.varchar,
-			Types.char,
-			Types.text]
+			[Types.VarChar,
+			Types.Char,
+			Types.Text]
 			)
 
 TimeTypes = set(
-			[Types.timestamp,
-			Types.timestampTimeZone,
-			Types.date,
-			Types.time,
-			Types.timeTimeZone,
+			[Types.Timestamp,
+			Types.TimestampTimeZone,
+			Types.Date,
+			Types.Time,
+			Types.TimeTimeZone,
 			Types.interval]
 			)
 
@@ -100,31 +106,27 @@ NonReferentialConstraints = set(
 					Modifiers.primaryKey]
 					)
 
-ReferentialConstraints = set(
-					[Modifiers.references,
-					Modifiers.onDeleteCascade,
-					Modifiers.onDeleteRestrict,
-					Modifiers.onUpdateCascade,
-					Modifiers.onUpdateRestrict]
-					)
-
 Delete = "delete"
 Update = "update"
 NoAction = "NO ACTION"
+OnDelete = "ON DELETE"
+OnUpdate = "ON UPDATE"
 Restrict = "RESTRICT"
 Cascade = "CASCADE"
 RestrictOrCascadeToModifier = {
 							Delete : {
-									Restrict : Modifiers.onDeleteRestrict,
-									Cascade : Modifiers.onDeleteCascade,
+									Restrict : OnDelete + " " + Restrict,
+									Cascade : OnDelete + " " + Cascade,
 									NoAction : ""									
 									},
 							Update : {
-									Restrict : Modifiers.onUpdateRestrict,
-									Cascade : Modifiers.onUpdateCascade,
+									Restrict : OnUpdate + " " + Restrict,
+									Cascade : OnUpdate + " " + Cascade,
 									NoAction : ""
 									}
 							}
+
+sLog = log.GetLogInstance()
 
 class Column(object):
 	"""Describes a column in a SQL table.
@@ -134,6 +136,19 @@ class Column(object):
 		self.Name = pName
 		self.Type = pType
 		self.Constraints = pConstraints
+		#Constraints must be a tuple;
+		#There's a lot of columns with just one constraint though,
+		#so the schema writer might forget a comma.
+		#If the schema's a string, coerce it to a 1-tuple.
+		if not isinstance(self.Constraints, tuple):
+			#(Note that it'll definitely be a string,
+			#since all constraints are defined as strings.)
+			#Warn user if we coerced input into a tuple.
+			sLog.LogWarning(constants.kFmtWarnCoercingConstraintString.format(self.Constraints),
+						constants.kTagSchemaBase,
+						constants.kMethodColumnInit)
+			#TODO: have a strict mode?
+			self.Constraints = (str(self.Constraints),)
 		self.Precision = pPrecision
 		self.ForeignKey = pForeignKey
 	
