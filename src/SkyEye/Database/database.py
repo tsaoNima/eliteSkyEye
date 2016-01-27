@@ -102,10 +102,20 @@ class Database(object):
 				constraintStr += constants.kConstraintSeparator + str(c)
 		#Also add the foreign key if it exists.
 		if column.ForeignKey:
+			foreignKeyStr = schemas.References + constants.kConstraintSeparator + column.ForeignKey
 			leading = ""
+			#Handle ON DELETE/UPDATE.
+			if column.DeleteRule != schemas.DeleteUpdateModifiers.NoAction:
+				foreignKeyStr += constants.kConstraintSeparator + schemas.DeleteModifierToString[column.DeleteRule]
+			if column.UpdateRule != schemas.DeleteUpdateModifiers.NoAction:
+				foreignKeyStr += constants.kConstraintSeparator + schemas.UpdateModifierToString[column.UpdateRule]
+			
+			#If there are any other constraints, treat this like another constraint
+			#and add a separator.
 			if len(constraints) > 0:
 				leading = constants.kConstraintSeparator
-			constraintStr += leading + schemas.Modifiers.references + constants.kConstraintSeparator + column.ForeignKey
+			#Put the foreign key info into the constraint string.
+			constraintStr += leading + foreignKeyStr
 		#Convert that into the final constraint string.
 		if constraintStr:
 			constraintStr = constants.kFmtColumnConstraints.format(constraintStr)
@@ -549,7 +559,7 @@ class Database(object):
 			#Does the constraint exist?
 			if not constraintRow:
 				#If not, mark it as missing.
-				addConstraintMissing(results, tableSchema.Name, column.Name, "FOREIGN_KEY")
+				addConstraintMissing(results, tableSchema.Name, column.Name, schemas.ForeignKey)
 			#If it does...
 			else:
 				#Does it refer to the right table ([foreign table name]_pkey)?
@@ -559,19 +569,27 @@ class Database(object):
 				actualValue = constraintRow[uniqueConstraintNameIdx]
 				if not actualValue != foreignTableName:
 					#If not, record mismatch.
-					addConstraintMismatch(results, column.Name, "FOREIGN_KEY", foreignTableName, actualValue)
+					addConstraintMismatch(results, column.Name, schemas.ForeignKey, foreignTableName, actualValue)
 					
 				#Does the ON DELETE RESTRICT/CASCADE option match what's given for our row?
-				onDeleteModifier = schemas.RestrictOrCascadeToModifier[schemas.Delete][constraintRow[deleteRuleIdx]]
-				if onDeleteModifier and onDeleteModifier not in column.Constraints:
+				onDeleteModifier = schemas.RestrictOrCascadeToModifier[constraintRow[deleteRuleIdx]]
+				if onDeleteModifier != column.DeleteRule:
 					#If the delete modifier doesn't match, mark the mismatch.
-					addConstraintMissing(results, tableSchema.Name, column.Name, onDeleteModifier)
+					addConstraintMismatch(results,
+										column.Name,
+										"ON DELETE",
+										column.DeleteRule,
+										onDeleteModifier)
 					
 				#Does the update modifier match?
-				onUpdateModifier = schemas.RestrictOrCascadeToModifier[schemas.Update][constraintRow[updateRuleIdx]]
-				if onUpdateModifier and onUpdateModifier not in column.Constraints:
+				onUpdateModifier = schemas.RestrictOrCascadeToModifier[constraintRow[updateRuleIdx]]
+				if onUpdateModifier != column.UpdateRule:
 					#If the update modifier doesn't match, mark the mismatch.
-					addConstraintMissing(results, tableSchema.Name, column.Name, onUpdateModifier)
+					addConstraintMismatch(results,
+										column.Name,
+										"ON UPDATE",
+										column.UpdateRule,
+										onUpdateModifier)
 	
 	def VerifyTable(self, tableSchema):
 		"""Checks that the table described by the given schema

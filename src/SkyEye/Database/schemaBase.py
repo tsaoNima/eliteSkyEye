@@ -111,18 +111,27 @@ OnDelete = "ON DELETE"
 OnUpdate = "ON UPDATE"
 Restrict = "RESTRICT"
 Cascade = "CASCADE"
+OnDeleteRestrict = OnDelete + " " + Restrict
+OnDeleteCascade = OnDelete + " " + Cascade
+OnUpdateRestrict = OnUpdate + " " + Restrict
+OnUpdateCascade = OnUpdate + " " + Cascade
+ForeignKey = "FOREIGN_KEY"
+References = "REFERENCES"
 RestrictOrCascadeToModifier = {
-							Delete : {
-									Restrict : OnDelete + " " + Restrict,
-									Cascade : OnDelete + " " + Cascade,
-									NoAction : ""									
-									},
-							Update : {
-									Restrict : OnUpdate + " " + Restrict,
-									Cascade : OnUpdate + " " + Cascade,
-									NoAction : ""
-									}
+							Restrict : DeleteUpdateModifiers.Restrict,
+							Cascade : DeleteUpdateModifiers.Cascade,
+							NoAction : DeleteUpdateModifiers.NoAction
 							}
+DeleteModifierToString = {
+						DeleteUpdateModifiers.Restrict : OnDeleteRestrict,
+						DeleteUpdateModifiers.Cascade : OnDeleteCascade,
+						DeleteUpdateModifiers.NoAction : ""
+						}
+UpdateModifierToString = {
+						DeleteUpdateModifiers.Restrict : OnUpdateRestrict,
+						DeleteUpdateModifiers.Cascade : OnUpdateCascade,
+						DeleteUpdateModifiers.NoAction : ""
+						}
 
 sLog = log.GetLogInstance()
 
@@ -130,7 +139,12 @@ class Column(object):
 	"""Describes a column in a SQL table.
 	"""
 	
-	def __init__(self, pName, pType, pConstraints=(), pPrecision=-1, pForeignKey=""):
+	def __init__(self, pName, pType,
+				pConstraints=(),
+				pPrecision=-1,
+				pForeignKey="",
+				pDeleteRule=DeleteUpdateModifiers.NoAction,
+				pUpdateRule=DeleteUpdateModifiers.NoAction):
 		self.Name = pName
 		self.Type = pType
 		self.Constraints = pConstraints
@@ -149,6 +163,8 @@ class Column(object):
 			self.Constraints = (str(self.Constraints),)
 		self.Precision = pPrecision
 		self.ForeignKey = pForeignKey
+		self.DeleteRule = pDeleteRule
+		self.UpdateRule = pUpdateRule
 	
 class TableDefinition(object):
 	"""Describes a SQL table's schema.

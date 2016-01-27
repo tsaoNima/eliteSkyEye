@@ -193,7 +193,7 @@ class DatabaseTests(TestBase):
 									(
 									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
 									Column("table_1_foreign_a", Types.Int, (Modifiers.NotNull,), pForeignKey="table_1"),
-									Column("table_1_foreign_b", Types.Int, (Modifiers.onUpdateCascade,), pForeignKey="table_1"),
+									Column("table_1_foreign_b", Types.Int, pForeignKey="table_1", pUpdateRule=schemaBase.DeleteUpdateModifiers.Cascade),
 									)),
 								TableDefinition("unrelated_table",
 									(
