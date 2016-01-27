@@ -34,15 +34,15 @@ class TableSchemaMismatch(VerifyProblem):
 class ColumnMissing(VerifyProblem):
 	def __init__(self, tableName, columnName):
 		pCode = kColumnProblem | kElementMissing
-		pString = "Column {0} of table {1} doesn't exist.".format(columnName, tableName)
+		pString = "Column {0} doesn't exist.".format(tableName + "." + columnName)
 		super(ColumnMissing, self).__init__(pCode, pString)
 
 class ColumnSchemaMismatch(VerifyProblem):
-	def __init__(self, columnName, expectedSchema, actualSchema):
+	def __init__(self, tableName, columnName, expectedSchema, actualSchema):
 		pCode = kColumnProblem | kElementDoesNotMatchSpec
-		pString = ("Column {0} doesn't match expected schema.",
-									"\n\tExpected column value: \"{1}\"",
-									"\n\tActual column value: \"{2}\"").format(columnName,
+		pString = ("Column {0} doesn't match expected schema."
+									"\n\tExpected column value: \"{1}\""
+									"\n\tActual column value: \"{2}\"").format(tableName + "." + columnName,
 																		 expectedSchema,
 																		  actualSchema)
 		super(ColumnSchemaMismatch, self).__init__(pCode, pString)
@@ -50,16 +50,16 @@ class ColumnSchemaMismatch(VerifyProblem):
 class ColumnConstraintMissing(VerifyProblem):
 	def __init__(self, tableName, columnName, constraintType):
 		pCode = kColumnProblem | kElementMissing
-		pString = "Constraint {0} on column {1} of table {2} doesn't exist.".format(constraintType, columnName, tableName)
+		pString = "Constraint {0} on column {1} doesn't exist.".format(constraintType, tableName + "." + columnName, tableName)
 		super(ColumnMissing, self).__init__(pCode, pString)
 
 class ColumnConstraintSchemaMismatch(VerifyProblem):
-	def __init__(self, columnName, constraintType, expectedSchema, actualSchema):
+	def __init__(self, tableName, columnName, constraintType, expectedSchema, actualSchema):
 		pCode = kColumnProblem | kElementDoesNotMatchSpec
 		pString = ("Constraint {0} on column {1} doesn't match expected schema.",
 									"\n\tExpected column value: \"{2}\"",
 									"\n\tActual column value: \"{3}\"").format(constraintType,
-																			columnName,
+																			tableName + "." + columnName,
 																			expectedSchema,
 																			actualSchema)
 		super(ColumnSchemaMismatch, self).__init__(pCode, pString)

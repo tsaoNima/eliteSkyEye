@@ -186,7 +186,7 @@ class DatabaseTests(TestBase):
 								TableDefinition("table_1",
 									(
 									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
-									Column("name", Types.VarChar, (Modifiers.NotNull,), 32),
+									Column("name", Types.VarChar, (Modifiers.NotNull,), pPrecision = 32),
 									Column("date", Types.Timestamp, ())
 									)),
 								TableDefinition("table_2",
@@ -199,7 +199,7 @@ class DatabaseTests(TestBase):
 									(
 									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
 									Column("bool", Types.Bool),
-									Column("char", Types.Char, 32),
+									Column("char", Types.Char, pPrecision = 32),
 									Column("float", Types.Float, (Modifiers.Unique,)),
 									Column("date", Types.Date),
 									Column("real", Types.Real)

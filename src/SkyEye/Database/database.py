@@ -15,17 +15,20 @@ from psycopg2.errorcodes import INVALID_PASSWORD
 
 sLog = log.GetLogInstance()
 
-def addColumnMissing(self, problemList, tableName, columnName):
+def addColumnMissing(problemList, tableName, columnName):
 	problemList.append(verificationProblems.ColumnMissing(tableName, columnName))
 
-def addColumnMismatch(self, problemList, columnName, expectedValue, actualValue):
-	problemList.append(verificationProblems.ColumnSchemaMismatch(columnName, expectedValue, actualValue))
+def addColumnMismatch(problemList, tableName, columnName,
+					expectedValue, actualValue):
+	problemList.append(verificationProblems.ColumnSchemaMismatch(tableName, columnName, expectedValue, actualValue))
 
-def addConstraintMissing(self, problemList, tableName, columnName, constraintType):
+def addConstraintMissing(problemList, tableName, columnName,
+						constraintType):
 	problemList.append(verificationProblems.ColumnConstraintMissing(tableName, columnName, constraintType))
 
-def addConstraintMismatch(self, problemList, columnName, constraintType, expectedValue, actualValue):
-	problemList.append(verificationProblems.ColumnSchemaMismatch(columnName, constraintType, expectedValue, actualValue))
+def addConstraintMismatch(problemList, tableName, columnName,
+						constraintType, expectedValue, actualValue):
+	problemList.append(verificationProblems.ColumnSchemaMismatch(tableName, columnName, constraintType, expectedValue, actualValue))
 	
 class Database(object):
 	"""Represents a database connection.
@@ -452,7 +455,7 @@ class Database(object):
 				actualType = rowsForColumn[dataTypeIdx]
 				if actualType != expectedType:
 					#If not, mark mismatch.
-					addColumnMismatch(results, column.Name + ".data_type", expectedType, actualType)
+					addColumnMismatch(results, tableSchema.Name, column.Name + ".data_type", expectedType, actualType)
 				
 				#If this is a string type or time/timestamp/interval type and precision was specified:
 				if column.Precision > 0 and column.Type in schemas.TypesWithPrecision:
@@ -461,13 +464,13 @@ class Database(object):
 						actualPrecision = rowsForColumn[charMaxLenIdx]
 						if actualPrecision != column.Precision:
 							#If not, mark mismatch.
-							addColumnMismatch(results, column.Name + ".character_maximum_length", column.Precision, actualPrecision)
+							addColumnMismatch(results, tableSchema.Name, column.Name + ".character_maximum_length", column.Precision, actualPrecision)
 					#Else if this is a time type, does the precision (datetime_precision) match?
 					elif column.Type in schemas.TimeTypes:
 						actualPrecision = rowsForColumn[dateTimePrecisionIdx]
 						if actualPrecision != column.Precision:
 							#If not, mark mismatch.
-							addColumnMismatch(results, column.Name + ".datetime_precision", column.Precision, actualPrecision)
+							addColumnMismatch(results, tableSchema.Name, column.Name + ".datetime_precision", column.Precision, actualPrecision)
 					
 				#Also check for nullability:
 				#	Does this column have a NULL or NOT NULL constraint?
@@ -481,7 +484,7 @@ class Database(object):
 					actualValue = rowsForColumn[isNullableIdx]
 					if actualValue != expectedValue:
 						#If not, mark mismatch.
-						addColumnMismatch(results, column.Name + ".is_nullable", expectedValue, actualValue)
+						addColumnMismatch(results, tableSchema.Name, column.Name + ".is_nullable", expectedValue, actualValue)
 	
 	def verifyTablePrimaryOrUniqueColumns(self, tableSchema, primaryOrUniqueColumns, results):
 		"""Verifies that the requested table has the same PRIMARY KEY/UNIQUE columns
@@ -518,7 +521,7 @@ class Database(object):
 				assert len(constraintRow) <= 1
 				#If it's missing, add a problem.
 				if not constraintRow:
-					addConstraintMissing(results, column.Name, constraint)
+					addConstraintMissing(results, tableSchema.Name, column.Name, constraint)
 				#Does the DB constraint type match schema constraint type?
 				else:
 					constraintRow = constraintRow[0]
@@ -526,7 +529,8 @@ class Database(object):
 					actualValue = constraintRow[constraintTypeIdx]
 					#If not, add a problem.
 					if actualValue != expectedValue:
-						addConstraintMismatch(results, column.Name, constraint, expectedValue, actualValue)
+						addConstraintMismatch(results, tableSchema.Name, column.Name,
+											constraint, expectedValue, actualValue)
 	
 	def verifyTableForeignColumns(self, tableSchema, foreignColumns, results):
 		"""Verifies that all FOREIGN KEY columns in a table
@@ -569,27 +573,22 @@ class Database(object):
 				actualValue = constraintRow[uniqueConstraintNameIdx]
 				if not actualValue != foreignTableName:
 					#If not, record mismatch.
-					addConstraintMismatch(results, column.Name, schemas.ForeignKey, foreignTableName, actualValue)
+					addConstraintMismatch(results, tableSchema.Name, column.Name,
+										schemas.ForeignKey, foreignTableName, actualValue)
 					
 				#Does the ON DELETE RESTRICT/CASCADE option match what's given for our row?
 				onDeleteModifier = schemas.RestrictOrCascadeToModifier[constraintRow[deleteRuleIdx]]
 				if onDeleteModifier != column.DeleteRule:
 					#If the delete modifier doesn't match, mark the mismatch.
-					addConstraintMismatch(results,
-										column.Name,
-										"ON DELETE",
-										column.DeleteRule,
-										onDeleteModifier)
+					addConstraintMismatch(results, tableSchema.Name, column.Name,
+										"ON DELETE", column.DeleteRule,	onDeleteModifier)
 					
 				#Does the update modifier match?
 				onUpdateModifier = schemas.RestrictOrCascadeToModifier[constraintRow[updateRuleIdx]]
 				if onUpdateModifier != column.UpdateRule:
 					#If the update modifier doesn't match, mark the mismatch.
-					addConstraintMismatch(results,
-										column.Name,
-										"ON UPDATE",
-										column.UpdateRule,
-										onUpdateModifier)
+					addConstraintMismatch(results, tableSchema.Name, column.Name,
+										"ON UPDATE", column.UpdateRule, onUpdateModifier)
 	
 	def VerifyTable(self, tableSchema):
 		"""Checks that the table described by the given schema
@@ -618,8 +617,8 @@ class Database(object):
 		#Each part of the schema is listed on totally different INFORMATION_SCHEMA
 		#tables; split the operation along those tables.
 		self.verifyTableDatatypes(tableSchema, results)
-		self.verifyTablePrimaryOrUniqueColumns(primaryOrUniqueColumns, results)
-		self.verifyTableForeignColumns(foreignColumns, results)
+		self.verifyTablePrimaryOrUniqueColumns(tableSchema, primaryOrUniqueColumns, results)
+		self.verifyTableForeignColumns(tableSchema, foreignColumns, results)
 		
 		#Return results.
 		if results:
