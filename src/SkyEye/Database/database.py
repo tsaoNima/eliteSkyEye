@@ -28,7 +28,7 @@ def addConstraintMissing(problemList, tableName, columnName,
 
 def addConstraintMismatch(problemList, tableName, columnName,
 						constraintType, expectedValue, actualValue):
-	problemList.append(verificationProblems.ColumnSchemaMismatch(tableName, columnName, constraintType, expectedValue, actualValue))
+	problemList.append(verificationProblems.ColumnConstraintSchemaMismatch(tableName, columnName, constraintType, expectedValue, actualValue))
 	
 class Database(object):
 	"""Represents a database connection.
@@ -542,7 +542,7 @@ class Database(object):
 		#Finally, check ON DELETE/UPDATE constraints via information_schema.referential_constraints.
 		#Select our rows (constraint_name, unique_constraint_name, update_rule, delete_rule).
 		#(Use 'public' for constraint_schema and the database name for constraint_catalog.)
-		query = queries.kQueryGetTablePrimaryOrUniqueInfo
+		query = queries.kQueryGetTableForeignInfo
 		constraintNameIdx = query.IndexForColumn("constraint_name")
 		uniqueConstraintNameIdx = query.IndexForColumn("unique_constraint_name")
 		updateRuleIdx = query.IndexForColumn("update_rule")

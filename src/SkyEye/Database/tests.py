@@ -206,6 +206,26 @@ class DatabaseTests(TestBase):
 									))
 								]
 		
+		kDBBadDefinition = schemaBase.DatabaseDefinition()
+		kDBBadDefinition.Name = self.verifyDBName
+		kDBBadDefinition.AllSchemas = [
+								TableDefinition("table_1",
+									(
+									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+									Column("name", Types.VarChar, (Modifiers.NotNull,), pPrecision = 32),
+									Column("date", Types.Timestamp, ())
+									)),
+								TableDefinition("unrelated_table",
+									(
+									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+									Column("fk", Types.Int, pForeignKey="table_1"),
+									Column("char", Types.Char, pPrecision = 48),
+									Column("float", Types.Float, (Modifiers.Unique,)),
+									Column("date", Types.Date),
+									Column("real", Types.Real)
+									))
+								]
+		
 		#Create this new DB.
 		self.dbConnection.CreateDatabase(kDBDefinition.Name)
 		
@@ -218,11 +238,26 @@ class DatabaseTests(TestBase):
 			return TestResult.Fail
 		
 		#Next, test verifying the DB.
-		pass
-		if not newDB.VerifyDatabase(kDBDefinition):
+		results = newDB.VerifyDatabase(kDBDefinition)
+		if results:
 			self.logSystem.LogError("Could not verify database {0}!".format(kDBDefinition.Name), where=kMethod)
+			#List the errors found.
+			self.logSystem.LogError("Reported errors:", where=kMethod)
+			for problem in results:
+				self.logSystem.LogError("* {0}".format(str(problem)), where=kMethod)
 			return TestResult.Fail
 		
+		#Now make sure verifications can fail.
+		results = newDB.VerifyDatabase(kDBBadDefinition)
+		#Fail if it says there are NO errors.
+		if not results:
+			self.logSystem.LogError("Verification functions are not verifying properly!", where=kMethod)
+			return TestResult.Fail
+		#List the errors found.
+		self.logSystem.LogVerbose("Successfully checked verification functions.", where=kMethod)
+		self.logSystem.LogVerbose("Reported errors:", where=kMethod)
+		for problem in results:
+			self.logSystem.LogVerbose("* {0}".format(str(problem)), where=kMethod)
 		newDB.Disconnect()
 		
 		#Drop the DB we made.
@@ -291,4 +326,4 @@ class DatabaseTests(TestBase):
 		self.dbConnection.Disconnect()
 	
 if __name__ == "__main__":
-	DatabaseTests().RunStandalone(logLevel=LogLevel.Verbose)
+	DatabaseTests().RunStandalone(logLevel=LogLevel.Info)

@@ -74,7 +74,7 @@ class Query(object):
 		#Now format all fields.
 		return kQueryBase.format(colString, self.sourceTable, varString)
 	
-	def __init__(self, columns, sourceTable, variables = None, variableElements = None):
+	def __init__(self, pColumns, sourceTable, variables = None, variableElements = None):
 		"""Initializer.
 		Parameters:
 			* columns: The columns to be selected, as a tuple of strings.
@@ -93,7 +93,7 @@ class Query(object):
 		"""Any columns to be selected.
 		"""
 		#Map columns to their indices.
-		for newIndex, col in enumerate(columns):
+		for newIndex, col in enumerate(pColumns):
 			self.columns[col] = newIndex
 		
 		self.sourceTable = sourceTable
