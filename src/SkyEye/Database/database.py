@@ -617,7 +617,7 @@ class Database(object):
 		"""
 		
 		#This could take a while, warn the user.
-		sLog.LogWarning(constants.kFmtVerifyTableStarting.format(tableSchema.Name),
+		sLog.LogDebug(constants.kFmtVerifyTableStarting.format(tableSchema.Name),
 					constants.kTagDatabase,
 					constants.kMethodVerifyTable)
 		results = []
@@ -718,10 +718,5 @@ class Database(object):
 						constants.kTagDatabase,
 						constants.kMethodSetupDatabase)
 				return False
-			
-		#Ideally, fill in the tables with default data afterwards.
-		pass
-		sLog.LogWarning("TODO: Implement default data initialization!",
-					constants.kTagDatabase,
-					"setupTables.SetupDatabases()")
+		
 		return True

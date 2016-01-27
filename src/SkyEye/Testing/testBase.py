@@ -141,15 +141,16 @@ class TestBase(object):
 		self.logSystem.LogInfo(constants.kFmtInitStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
-		self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
+		self.logSystem.LogInfo(constants.kSectionStart, constants.kTagTesting, constants.kMethodTestAll)
 		shouldRunTests = self.onTestAllInit()
 		if not shouldRunTests:
 			self.logSystem.LogError(constants.kFmtErrInitFailed.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
 		
+		#Perform the test itself
+		#if init went off properly.
 		if shouldRunTests:
-			#Perform the test itself.
 			self.logSystem.LogInfo(constants.kFmtAllTestsStarted.format(self.__class__.__name__),
 								constants.kTagTesting,
 								constants.kMethodTestAll)
@@ -159,11 +160,10 @@ class TestBase(object):
 				self.logSystem.LogError(constants.kFatalTestFailure,
 									constants.kTagTesting,
 									constants.kMethodTestAll)
-			self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
 			self.summarizeResults()
 		
 		#Always do post-test cleanup.
-		self.logSystem.LogInfo(constants.kLineSeparator, constants.kTagTesting, constants.kMethodTestAll)
+		self.logSystem.LogInfo(constants.kSectionEnd, constants.kTagTesting, constants.kMethodTestAll)
 		self.logSystem.LogInfo(constants.kFmtCleanupStarted.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
@@ -171,7 +171,7 @@ class TestBase(object):
 			self.logSystem.LogWarning(constants.kFmtWarnCleanupFailed.format(self.__class__.__name__),
 							constants.kTagTesting,
 							constants.kMethodTestAll)
-	
+			
 	def RunStandalone(self, logPath=constants.kDefaultLogPath, logLevel=LogLevel.Verbose, pBatchMode=True):
 		"""Call to run test in batch mode; this is usually the equivalent of main().
 		"""
@@ -200,7 +200,7 @@ class TestBase(object):
 		self.logSystem.LogInfo(constants.kFmtTestStarted.format(methodName),
 							constants.kTagTesting,
 							where)
-		self.logSystem.LogInfo(constants.kLineSeparator,
+		self.logSystem.LogInfo(constants.kSectionStart,
 							constants.kTagTesting,
 							where)
 		self.numTestsAttempted += 1
@@ -258,7 +258,7 @@ class TestBase(object):
 			resultLevel = LogLevel.Warning
 			self.numTestsSkipped += 1
 		
-		self.logSystem.Log(constants.kLineSeparator,
+		self.logSystem.Log(constants.kSectionEnd,
 							resultLevel,
 							constants.kTagTesting,
 							where)
