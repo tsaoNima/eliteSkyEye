@@ -25,10 +25,10 @@ class Types:
 	VarChar = "CHARACTER VARYING"
 	Char = "CHARACTER"
 	Text = "TEXT"
-	Timestamp = "TIMESTAMP"
+	Timestamp = "TIMESTAMP WITHOUT TIME ZONE"
 	TimestampTimeZone = "TIMESTAMP WITH TIME ZONE"
 	Date = "DATE"
-	Time = "TIME"
+	Time = "TIME WITHOUT TIME ZONE"
 	TimeTimeZone = "TIME WITH TIME ZONE"
 	Interval = "INTERVAL"
 
@@ -51,7 +51,7 @@ class DeleteUpdateModifiers:
 
 ConstraintToISConstraintType = {
 							Modifiers.Unique : "UNIQUE",
-							Modifiers.PrimaryKey : "PRIMARY_KEY"
+							Modifiers.PrimaryKey : "PRIMARY KEY"
 							}
 """Maps constraint names to INFORMATION_SCHEMA constraint_type strings.
 """
@@ -64,45 +64,35 @@ ConstraintToISConstraintNameSuffix = {
 Note that these are lowercased!
 """
 
-TypesWithPrecision = set(
-					[Types.VarChar,
+TypesWithPrecision = [Types.VarChar,
 					Types.Char,
 					Types.Timestamp,
 					Types.TimestampTimeZone,
 					Types.Time,
 					Types.TimeTimeZone,
 					Types.Interval]
-					)
 
-StringTypes = set(
-			[Types.VarChar,
+StringTypes = [Types.VarChar,
 			Types.Char,
 			Types.Text]
-			)
 
-TimeTypes = set(
-			[Types.Timestamp,
+TimeTypes = [Types.Timestamp,
 			Types.TimestampTimeZone,
 			Types.Date,
 			Types.Time,
 			Types.TimeTimeZone,
 			Types.Interval]
-			)
 
-NullConstraints = set(
-					[Modifiers.NotNull,
+NullConstraints = [Modifiers.NotNull,
 					Modifiers.NullDefault]
-					)
 
 ConstraintIsNullable = {
-					Modifiers.NotNull : False,
-					Modifiers.NullDefault : True
+					Modifiers.NotNull : "NO",
+					Modifiers.NullDefault : "YES"
 					}
 
-NonReferentialConstraints = set(
-					[Modifiers.Unique,
+NonReferentialConstraints = [Modifiers.Unique,
 					Modifiers.PrimaryKey]
-					)
 
 Delete = "delete"
 Update = "update"

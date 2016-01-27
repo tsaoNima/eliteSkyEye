@@ -418,12 +418,13 @@ class Database(object):
 		#Otherwise return all rows.
 		return self.cursor.fetchall()
 	
-	def verifyTableDatatypes(self, tableSchema, results):
+	def verifyTableDatatypes(self, tableSchema):
 		"""Verifies that all columns in the requested table fit the given schema.
 		Raises:
 			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 		
+		results = []
 		query = queries.kQueryGetTableDatatypeInfo
 		columnNameIdx = query.IndexForColumn("column_name")
 		dataTypeIdx = query.IndexForColumn("data_type")
@@ -440,9 +441,9 @@ class Database(object):
 			#If the column doesn't exist in the result set,
 			#add it to the list of problems.
 			rowsForColumn = [row for row in datatypeRows if row[columnNameIdx] == column.Name]
+			sLog.LogVerbose(str(rowsForColumn))
 			if not rowsForColumn:
-				addColumnMissing(results, tableSchema.Name, tableSchema.Columns)
-				
+				addColumnMissing(results, tableSchema.Name, column.Name)
 			#Otherwise, check schema details:
 			else:
 				#There should only be one row for this column name,
@@ -485,14 +486,17 @@ class Database(object):
 					if actualValue != expectedValue:
 						#If not, mark mismatch.
 						addColumnMismatch(results, tableSchema.Name, column.Name + ".is_nullable", expectedValue, actualValue)
+		
+		return results
 	
-	def verifyTablePrimaryOrUniqueColumns(self, tableSchema, primaryOrUniqueColumns, results):
+	def verifyTablePrimaryOrUniqueColumns(self, tableSchema, primaryOrUniqueColumns):
 		"""Verifies that the requested table has the same PRIMARY KEY/UNIQUE columns
 		that were specified in its schema.
 		Raises:
 			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
 		
+		results = []
 		#Get all constraints on the table.
 		#Do UNIQUE/PRIMARY KEY first via information_schema.table_constraints.
 		#(Use 'public' for constraint_schema and the database name for constraint_catalog.)
@@ -515,12 +519,18 @@ class Database(object):
 				#Does said constraint exist?
 				#Build the constraint_name:
 				#[table name]_[column name]_[constraint type suffix].
-				constraintName = tableSchema.Name + "_" + column.Name + "_" + schemas.ConstraintToISConstraintNameSuffix[constraint]
+				constraintName = ""
+				#Primary key constraints lack a column name.
+				if constraint == schemas.Modifiers.PrimaryKey:
+					constraintName = tableSchema.Name + "_" + schemas.ConstraintToISConstraintNameSuffix[constraint]
+				else:
+					constraintName = tableSchema.Name + "_" + column.Name + "_" + schemas.ConstraintToISConstraintNameSuffix[constraint]
 				#Get the constraint_type matching that constraint_name.
 				constraintRow = [row for row in datatypeRows if row[constraintNameIdx] == constraintName]
 				assert len(constraintRow) <= 1
 				#If it's missing, add a problem.
 				if not constraintRow:
+					sLog.LogError(constraintName)
 					addConstraintMissing(results, tableSchema.Name, column.Name, constraint)
 				#Does the DB constraint type match schema constraint type?
 				else:
@@ -531,13 +541,17 @@ class Database(object):
 					if actualValue != expectedValue:
 						addConstraintMismatch(results, tableSchema.Name, column.Name,
 											constraint, expectedValue, actualValue)
+		
+		return results
 	
-	def verifyTableForeignColumns(self, tableSchema, foreignColumns, results):
+	def verifyTableForeignColumns(self, tableSchema, foreignColumns):
 		"""Verifies that all FOREIGN KEY columns in a table
 		match their specifications in the table's schema.
 		Raises:
 			* NotConnectedError if Database.Connect() has not been successfully called.
 		"""
+		
+		results = []
 		
 		#Finally, check ON DELETE/UPDATE constraints via information_schema.referential_constraints.
 		#Select our rows (constraint_name, unique_constraint_name, update_rule, delete_rule).
@@ -571,7 +585,7 @@ class Database(object):
 				foreignTableName = column.ForeignKey + "_pkey"
 				
 				actualValue = constraintRow[uniqueConstraintNameIdx]
-				if not actualValue != foreignTableName:
+				if actualValue != foreignTableName:
 					#If not, record mismatch.
 					addConstraintMismatch(results, tableSchema.Name, column.Name,
 										schemas.ForeignKey, foreignTableName, actualValue)
@@ -589,6 +603,8 @@ class Database(object):
 					#If the update modifier doesn't match, mark the mismatch.
 					addConstraintMismatch(results, tableSchema.Name, column.Name,
 										"ON UPDATE", column.UpdateRule, onUpdateModifier)
+	
+		return results
 	
 	def VerifyTable(self, tableSchema):
 		"""Checks that the table described by the given schema
@@ -608,6 +624,11 @@ class Database(object):
 					constants.kMethodVerifyTable)
 		results = []
 		
+		#Abort immediately if the table simply doesn't exist.
+		if not self.TableExists(tableSchema.Name):
+			results.append(verificationProblems.TableMissing(tableSchema.Name))
+			return results
+		
 		#Pull out the columns that have PRIMARY KEY/FOREIGN KEY/UNIQUE modifiers.
 		primaryOrUniqueColumns = [column for column in tableSchema.Columns if
 								schemas.Modifiers.Unique in column.Constraints or
@@ -616,13 +637,21 @@ class Database(object):
 		
 		#Each part of the schema is listed on totally different INFORMATION_SCHEMA
 		#tables; split the operation along those tables.
-		self.verifyTableDatatypes(tableSchema, results)
-		self.verifyTablePrimaryOrUniqueColumns(tableSchema, primaryOrUniqueColumns, results)
-		self.verifyTableForeignColumns(tableSchema, foreignColumns, results)
+		allProblems = [self.verifyTableDatatypes(tableSchema),
+				self.verifyTablePrimaryOrUniqueColumns(tableSchema, primaryOrUniqueColumns),
+				self.verifyTableForeignColumns(tableSchema, foreignColumns)]
+		
+		for problemGroup in allProblems:
+			if problemGroup:
+				for problem in problemGroup:
+					results.append(problem)
 		
 		#Return results.
 		if results:
-			results = [verificationProblems.TableSchemaMismatch(tableSchema.Name),].append(results)
+			newResults = [verificationProblems.TableSchemaMismatch(tableSchema.Name),]
+			for result in results:
+				newResults.append(result)
+			results = newResults
 		return results
 	
 	def VerifyDatabase(self, databaseDefinition):
@@ -636,6 +665,10 @@ class Database(object):
 		Raises:
 			* NotConnectedError if Database.Connect() has not been successfully called.
 			* InvalidParameterError if the database definition's name doesn't match this database's name.
+		Remarks: Right now, verification can only check that a field specified in the schema is
+		missing, or that a field in the table doesn't match its definition in the schema.
+		Having EXTRA tables or columns that weren't specified in the schema does not generate
+		a problem.
 		"""
 		#Abort if the definiton's name doesn't match the current connection.
 		if self.dbName != databaseDefinition.Name:
@@ -647,20 +680,18 @@ class Database(object):
 					constants.kMethodVerifyDatabase)
 		
 		#Ideally we should check schema version first.
-		pass
+		#pass
 		
 		#The list of things that failed verification.
 		results = []
 		
 		#Now check each table.
 		for tableSchema in databaseDefinition.AllSchemas:
-			#Check that this table exists.
-			if self.TableExists(tableSchema.Name):
-				#If it does, check its columns.
-				results.append(self.VerifyTable(tableSchema))
-			else:
-				#Record that the table doesn't exist.
-				results.append(verificationProblems.TableMissing(tableSchema.Name))
+			#Check for existence and check its columns.
+			tableResults = self.VerifyTable(tableSchema)
+			if tableResults:
+				for result in tableResults:
+					results.append(result)
 		
 		return results
 	

@@ -215,10 +215,14 @@ class DatabaseTests(TestBase):
 									Column("name", Types.VarChar, (Modifiers.NotNull,), pPrecision = 32),
 									Column("date", Types.Timestamp, ())
 									)),
+								TableDefinition("should_not_exist",
+									(
+									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
+									)),
 								TableDefinition("unrelated_table",
 									(
 									Column("id", Types.Int, (Modifiers.PrimaryKey,)),
-									Column("fk", Types.Int, pForeignKey="table_1"),
+									Column("col_should_not_exist", Types.Int, pForeignKey="table_1"),
 									Column("char", Types.Char, pPrecision = 48),
 									Column("float", Types.Float, (Modifiers.Unique,)),
 									Column("date", Types.Date),
@@ -253,11 +257,13 @@ class DatabaseTests(TestBase):
 		if not results:
 			self.logSystem.LogError("Verification functions are not verifying properly!", where=kMethod)
 			return TestResult.Fail
+		
 		#List the errors found.
 		self.logSystem.LogVerbose("Successfully checked verification functions.", where=kMethod)
-		self.logSystem.LogVerbose("Reported errors:", where=kMethod)
+		self.logSystem.LogVerbose("Reported {0} errors:".format(len(results)), where=kMethod)
 		for problem in results:
 			self.logSystem.LogVerbose("* {0}".format(str(problem)), where=kMethod)
+		
 		newDB.Disconnect()
 		
 		#Drop the DB we made.
@@ -326,4 +332,4 @@ class DatabaseTests(TestBase):
 		self.dbConnection.Disconnect()
 	
 if __name__ == "__main__":
-	DatabaseTests().RunStandalone(logLevel=LogLevel.Info)
+	DatabaseTests().RunStandalone(logLevel=LogLevel.Verbose)

@@ -21,45 +21,45 @@ class VerifyProblem(object):
 #Actual definition of problems.
 class TableMissing(VerifyProblem):
 	def __init__(self, tableName):
-		pCode = kTableProblem | kElementMissing
-		pString = "Table {0} doesn't exist.".format(tableName)
-		super(TableMissing, self).__init__(pCode, pString)
+		problemCode = kTableProblem | kElementMissing
+		problemString = "Table {0} doesn't exist.".format(tableName)
+		super(TableMissing, self).__init__(problemCode, problemString)
 
 class TableSchemaMismatch(VerifyProblem):
 	def __init__(self, tableName):
-		pCode = kTableProblem | kElementDoesNotMatchSpec
-		pString = "Table {0}'s schema doesn't match SkyEye's expected schema.".format(tableName)
-		super(TableSchemaMismatch, self).__init__(pCode, pString)
+		problemCode = kTableProblem | kElementDoesNotMatchSpec
+		problemString = "Table {0}'s schema doesn't match SkyEye's expected schema.".format(tableName)
+		super(TableSchemaMismatch, self).__init__(problemCode, problemString)
 
 class ColumnMissing(VerifyProblem):
 	def __init__(self, tableName, columnName):
-		pCode = kColumnProblem | kElementMissing
-		pString = "Column {0} doesn't exist.".format(tableName + "." + columnName)
-		super(ColumnMissing, self).__init__(pCode, pString)
+		problemCode = kColumnProblem | kElementMissing
+		problemString = "Column {0} doesn't exist.".format(tableName + "." + columnName)
+		super(ColumnMissing, self).__init__(problemCode, problemString)
 
 class ColumnSchemaMismatch(VerifyProblem):
 	def __init__(self, tableName, columnName, expectedSchema, actualSchema):
-		pCode = kColumnProblem | kElementDoesNotMatchSpec
-		pString = ("Column {0} doesn't match expected schema."
+		problemCode = kColumnProblem | kElementDoesNotMatchSpec
+		problemString = ("Column {0} doesn't match expected schema."
 									"\n\tExpected column value: \"{1}\""
 									"\n\tActual column value: \"{2}\"").format(tableName + "." + columnName,
 																		 expectedSchema,
 																		  actualSchema)
-		super(ColumnSchemaMismatch, self).__init__(pCode, pString)
+		super(ColumnSchemaMismatch, self).__init__(problemCode, problemString)
 		
 class ColumnConstraintMissing(VerifyProblem):
 	def __init__(self, tableName, columnName, constraintType):
-		pCode = kColumnProblem | kElementMissing
-		pString = "Constraint {0} on column {1} doesn't exist.".format(constraintType, tableName + "." + columnName, tableName)
-		super(ColumnConstraintMissing, self).__init__(pCode, pString)
+		problemCode = kColumnProblem | kElementMissing
+		problemString = "Constraint {0} on column {1} doesn't exist.".format(constraintType, tableName + "." + columnName, tableName)
+		super(ColumnConstraintMissing, self).__init__(problemCode, problemString)
 
 class ColumnConstraintSchemaMismatch(VerifyProblem):
 	def __init__(self, tableName, columnName, constraintType, expectedSchema, actualSchema):
-		pCode = kColumnProblem | kElementDoesNotMatchSpec
-		pString = ("Constraint {0} on column {1} doesn't match expected schema."
+		problemCode = kColumnProblem | kElementDoesNotMatchSpec
+		problemString = ("Constraint {0} on column {1} doesn't match expected schema."
 									"\n\tExpected column value: \"{2}\""
 									"\n\tActual column value: \"{3}\"").format(constraintType,
 																			tableName + "." + columnName,
 																			expectedSchema,
 																			actualSchema)
-		super(ColumnConstraintSchemaMismatch, self).__init__(pCode, pString)
+		super(ColumnConstraintSchemaMismatch, self).__init__(problemCode, problemString)
