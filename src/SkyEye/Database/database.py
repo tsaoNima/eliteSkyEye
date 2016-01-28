@@ -452,6 +452,10 @@ class Database(object):
 				
 				#Does the column type match (data_type)?
 				expectedType = column.Type.lower()
+				#If this is a serial type, map back to the base data type.
+				#serial maps to integer,
+				#smallserial maps to smallint.
+				pass
 				actualType = rowsForColumn[dataTypeIdx]
 				if actualType != expectedType:
 					#If not, mark mismatch.
@@ -604,6 +608,14 @@ class Database(object):
 	
 		return results
 	
+	def verifyTableSequenceColumns(self, tableSchema, sequenceColumns):
+		#Do our IS query (on table "sequences").
+		#For each column:
+		#	Build the sequence name ("[table name]_[column name]_seq").
+		#	Does the sequence for this column exist?
+		#		If not, mark a missing constraint.
+		pass
+	
 	def VerifyTable(self, tableSchema):
 		"""Checks that the table described by the given schema
 		exists and matches the schema.
@@ -632,12 +644,15 @@ class Database(object):
 								schemas.Modifiers.Unique in column.Constraints or
 								schemas.Modifiers.PrimaryKey in column.Constraints]
 		foreignColumns = [column for column in tableSchema.Columns if column.ForeignKey]
+		sequenceColumns = []
+		pass
 		
 		#Each part of the schema is listed on totally different INFORMATION_SCHEMA
 		#tables; split the operation along those tables.
 		allProblems = [self.verifyTableDatatypes(tableSchema),
 				self.verifyTablePrimaryOrUniqueColumns(tableSchema, primaryOrUniqueColumns),
-				self.verifyTableForeignColumns(tableSchema, foreignColumns)]
+				self.verifyTableForeignColumns(tableSchema, foreignColumns),
+				self.verifyTableSequenceColumns(tableSchema, sequenceColumns)]
 		
 		for problemGroup in allProblems:
 			if problemGroup:
@@ -678,7 +693,7 @@ class Database(object):
 					constants.kMethodVerifyDatabase)
 		
 		#Ideally we should check schema version first.
-		#pass
+		pass
 		
 		#The list of things that failed verification.
 		results = []

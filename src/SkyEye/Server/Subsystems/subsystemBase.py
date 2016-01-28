@@ -19,17 +19,24 @@ class SubsystemBase(object):
 
 	def onStart(self):
 		"""Called when Start() is called.
-		Subclasses should override this.
+		Subclasses can override this.
 		"""
 		pass
 	
 	def onShutdown(self):
 		"""Called when Shutdown() is called
 		but before the database connection is closed.
-		Subclasses should override this.
+		Subclasses can override this.
 		"""
 		pass
-
+	
+	def onSetup(self):
+		"""Called in Setup(),
+		after database definition has been created.		
+		Subclasses can override this.
+		"""
+		pass
+	
 	def __init__(self, pName, pDefinition):
 		"""Initializer.
 		"""
@@ -125,7 +132,9 @@ class SubsystemBase(object):
 		if self.Definition is None:
 			raise exceptions.InternalServiceError(constants.kErrFmtSetupNeedsDBDefinition.format(self.Name))
 		
-		return self.Database.SetupDatabase(self.Definition)
+		if not self.Database.SetupDatabase(self.Definition):
+			return False
+		self.onSetup()
 		
 	def Verify(self):
 		"""Calls VerifyDatabase on the subsystem.

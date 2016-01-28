@@ -19,6 +19,7 @@ class Types:
 	"""
 	
 	Int = "INTEGER"
+	SmallInt = "SMALLINT"
 	Real = "REAL"
 	Float = "DOUBLE PRECISION"
 	Bool = "BOOLEAN"
@@ -31,6 +32,8 @@ class Types:
 	Time = "TIME WITHOUT TIME ZONE"
 	TimeTimeZone = "TIME WITH TIME ZONE"
 	Interval = "INTERVAL"
+	Serial = "SERIAL"	#Use this for autoincrementing id columns.
+	SmallSerial = "SMALLSERIAL"
 
 class Modifiers:
 	"""Specifies valid column modifiers.
@@ -94,6 +97,10 @@ ConstraintIsNullable = {
 NonReferentialConstraints = [Modifiers.Unique,
 					Modifiers.PrimaryKey]
 
+SerialTypeToDataType = {Types.Serial : Types.Int,
+					Types.SmallSerial : Types.SmallInt
+					}
+
 Delete = "delete"
 Update = "update"
 NoAction = "NO ACTION"
@@ -134,7 +141,8 @@ class Column(object):
 				pPrecision=-1,
 				pForeignKey="",
 				pDeleteRule=DeleteUpdateModifiers.NoAction,
-				pUpdateRule=DeleteUpdateModifiers.NoAction):
+				pUpdateRule=DeleteUpdateModifiers.NoAction,
+				pAutoIncrement=False):
 		self.Name = pName
 		self.Type = pType
 		self.Constraints = pConstraints

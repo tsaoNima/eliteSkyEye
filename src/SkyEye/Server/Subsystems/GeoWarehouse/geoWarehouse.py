@@ -26,6 +26,19 @@ class GeoWarehouse(SubsystemBase):
 		"""
 		pass
 	
+	def onSetup(self):
+		#Generate default values.
+		pass
+	
+	def eddbImport(self):
+		#systems.json is a really big file, needs to be split up or streamed in somehow.
+		#In any case, has data for each system.
+		#Figure out what data the import can overwrite.
+		#Figure out which systems need overwriting.
+		#For those systems:
+			#Overwrite with EDDB's data.
+		pass
+	
 	def __init__(self):
 		schema = GDWSchemas()
 		super(GeoWarehouse, self).__init__(schema.Name, schema)
