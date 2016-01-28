@@ -92,7 +92,7 @@ class SubsystemBase(object):
 		"""
 		#Abort if no definition is set.
 		if self.Definition is None:
-			raise exceptions.InternalServiceError(constants.kErrFmtCreateNeedsDBDefinition.format(self.Name))
+			raise exceptions.InternalServiceError(constants.kErrFmtDropNeedsDBDefinition.format(self.Name))
 		
 		#Connect to the sysadmin database.
 		adminDB = Database()

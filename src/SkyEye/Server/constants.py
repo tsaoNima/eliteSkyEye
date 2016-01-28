@@ -8,7 +8,9 @@ kServerDBAdminName = "sky_eye_admin"
 kSysAdminDatabaseName = "postgres"
 kSysAdminUserName = "postgres"
 
-kPromptNewDBPassword = "Please enter a new password for the database admin account: "
+kFmtPromptNewDBPassword = "\nPlease enter a new password for the database admin account {0}: "
+kFmtConfirmNewDBPassword = "\nPlease confirm the new password for {0}: "
+kErrNewDBPasswordMismatch = "\nConfirmation does not match new password, please enter again: "
 kMaxNumPrompts = 3
 
 kTagServer = "Server"
@@ -16,23 +18,27 @@ kTagServer = "Server"
 kMethodRequestNewCredentials = "Server.requestNewCredentials()"
 kMethodLogin = "Server.Login()"
 kMethodLogout = "Server.Logout()"
-kMethodGetCredentials = "Server.getCredentials()"
+kMethodGetCredentials = "Server.promptCredentials()"
 kMethodFirstTimeSetup = "Server.FirstTimeSetup()"
+kMethodClearCredentials = "Server.ClearCredentials()"
 
 kErrNewCredentialsFailed = "Aborting new credential request!"
 kErrLoginFailed = "Aborting login!"
 kErrCredentialRequestFailed = "Couldn't get new credentials!"
 kErrTooManyPromptsFailed = "Login attempts exceeded, aborting login!"
 kErrNotLoggedIn = "Not logged in, can't complete request!"
+kErrLoggedIn = "Request modifies server databases; can't complete request! Please log out first."
 kErrNoAdminPassword = "Database admin password not set!"
 kFmtErrBadCredentials = "User name or password invalid for user {0}!"
-kLoginComplete = "Administrator connected to server."
-kLogoutComplete = "Administrator has logged out."
+kFmtLoginStarted = "Connecting to server as {0}..."
+kFmtLoginComplete = "{0} has connected to the server."
+kFmtLogoutComplete = "{0} has logged out."
+kFmtWarnClearingCredentials = "Clearing credentials for user {0}!"
 
 #Setup strings.
 kFirstTimeSetupStarting = "Entering server setup..."
 kFirstTimeSetupWarnDataLoss = "Warning - any existing data and users will be lost!"
-kFirstTimeSetupPromptSysAdminPassword = "Please enter the password for database user \"{0}\"".format(kSysAdminUserName)
+kFirstTimeSetupPromptSysAdminPassword = "\nPlease enter the password for database user {0}: ".format(kSysAdminUserName)
 kFirstTimeSetupErrSysAdminPasswordInvalid = "Password invalid."
 kFirstTimeSetupCreatingDBAdmin = "Creating database administrator account..."
 kFirstTimeSetupDBAdminCreated = "Database administrator account created."

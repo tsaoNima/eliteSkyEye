@@ -50,6 +50,12 @@ def SetPassword(serviceName, password):
 	
 	keyring.set_password(serviceName, getCurrentUser(), password)
 
+def DeletePassword(serviceName):
+	"""Deletes the password for the given service for the current user!
+	"""
+	
+	keyring.delete_password(serviceName, getCurrentUser())
+
 def PromptPassword(pPrompt = constants.kDefaultPassPrompt):
 	"""Requests the user to enter a password via standard input.
 	Returns: the password the user entered.

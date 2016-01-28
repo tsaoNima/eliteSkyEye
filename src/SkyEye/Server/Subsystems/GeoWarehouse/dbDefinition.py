@@ -97,13 +97,13 @@ class GDWSchemas(DatabaseDefinition):
 						TableDefinition("conflict_zones",
 												(Column("id", Types.Int, (Modifiers.PrimaryKey,)),
 												Column("celestial", Types.Int, (Modifiers.NotNull,), pForeignKey="system_celestials"),
-												Column("distance_from_celestial", Types.Float,
+												Column("distance_from_celestial", Types.Float),
 												Column("intensity", Types.Int, (Modifiers.NotNull,), pForeignKey="cz_intensities"),
 												Column("war", Types.Int, (Modifiers.NotNull,), pForeignKey="wars"),
 												Column("faction_1_deployed_cap_ship", Types.Bool, (Modifiers.NotNull,)),
 												Column("faction_2_deployed_cap_ship", Types.Bool, (Modifiers.NotNull,)),
 												Column("is_visible", Types.Bool, (Modifiers.NotNull,)),
-												Column("last_updated", Types.Timestamp, (Modifiers.NotNull,))))
+												Column("last_updated", Types.Timestamp, (Modifiers.NotNull,)))
 												),
 						TableDefinition("factions_in_system",
 													(Column("id", Types.Int, (Modifiers.PrimaryKey,)),

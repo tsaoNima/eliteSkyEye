@@ -17,6 +17,7 @@ kErrFmtCreateNeedsDBDefinition = kErrFmtNoDBDefinition.format("can't create subs
 kErrFmtSetupNeedsDBDefinition = kErrFmtNoDBDefinition.format("can't setup subsystem {0}")
 kErrFmtVerifyNeedsDBDefinition = kErrFmtNoDBDefinition.format("can't verify subsystem {0}")
 kErrFmtStartNeedsDBDefinition = kErrFmtNoDBDefinition.format("can't connect to subsystem {0}")
+kErrFmtDropNeedsDBDefinition = kErrFmtNoDBDefinition.format("can't drop subsystem {0}")
 kFmtStartingSubsystem = "Starting subsystem '{0}'..."
 kFmtStartedSubsystem = "Started subsystem '{0}'."
 kFmtShuttingDownSubsystem = "Shutting down subsystem '{0}'..."

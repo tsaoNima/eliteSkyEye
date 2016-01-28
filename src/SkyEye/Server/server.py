@@ -14,13 +14,66 @@ from ..Logging.structs import LogLevel
 from ..Exceptions import exceptions
 from Subsystems.GeoWarehouse.geoWarehouse import GeoWarehouse
 from Subsystems.ReconAnalyzer.reconAnalyzer import ReconAnalyzer
+from SkyEye.Exceptions.exceptions import PasswordInvalidError
 
 sLog = log.GetLogInstance()
 
-'''
-Represents the server connection.
-'''
 class Server(object):
+	"""Represents the server connection.
+	"""
+		
+	def __init__(self):
+		self._userName = constants.kServerDBAdminName
+		self.subsystems = []
+		#Database connections for subsystems.
+		self.subsystems.append(GeoWarehouse())
+		self.subsystems.append(ReconAnalyzer())
+		#If true, server should not accept standard input.
+		self._batchMode = True
+		#If true, server is connected to all internal services.
+		self._loggedIn = False
+	
+	@property
+	def UserName(self):
+		"""Returns the username used to access the server.
+		"""
+		return self._userName
+	
+	@UserName.setter
+	def UserName(self, val):
+		"""Sets the username used to access the server.
+		"""
+		
+		#Sanity check.
+		if val is None or not val:
+			self._userName = constants.kServerDBAdminName
+		else:
+			self._userName = val  
+	
+	@property
+	def LoggedIn(self):
+		"""Returns whether or not the server is connected to its databases.
+		"""
+		return self._loggedIn
+	
+	@property
+	def BatchMode(self):
+		"""Returns whether or not the server is running in batch mode.
+		"""
+		return self._batchMode
+	
+	@BatchMode.setter
+	def BatchMode(self, val):
+		"""Sets whether or not we are in batch mode.
+		Raises:
+			* WrongModeError if called while self.LoggedIn is True.
+		"""
+		
+		if self.LoggedIn:
+			raise exceptions.WrongModeError("Attempted to set server batch mode while connected to the server!")
+		else:	
+			self._batchMode = bool(val)
+	
 	def getPassword(self):
 		"""Gets the password for the server admin.
 		Returns: The password for the server admin if it is set, None otherwise.
@@ -39,13 +92,24 @@ class Server(object):
 		"""
 		
 		#Are we in batch mode?
-		if self.batchMode:
+		if self.BatchMode:
 			#Throw an exception!
 			raise exceptions.WrongModeError(genericStrings.kErrCannotPerformInBatchMode)
 			return False	
 		#Otherwise, ask for new login info.
 		try:
-			newPass = keychainOps.PromptPassword(constants.kPromptNewDBPassword)
+			newPass = keychainOps.PromptPassword(constants.kFmtPromptNewDBPassword.format(self.UserName))
+			#Confirm the password.
+			confirmPass = keychainOps.PromptPassword(constants.kFmtConfirmNewDBPassword.format(self.UserName))
+			numFails = 0
+			while confirmPass != newPass:
+				if numFails >= constants.kMaxNumPrompts:
+					sLog.LogError(constants.kErrTooManyPromptsFailed,
+								constants.kTagServer,
+								constants.kMethodRequestNewCredentials)
+					return False
+				numFails += 1
+				confirmPass = keychainOps.PromptPassword(constants.kErrNewDBPasswordMismatch)
 			keychainOps.SetPassword(KeychainConstants.kServiceDatabase, newPass)
 			return True
 		except exceptions.SkyEyeError as e:
@@ -61,33 +125,31 @@ class Server(object):
 		Raises: psycopg2.Error if anything besides an invalid password error occurs.
 		"""
 		try:
-			tempConnect = psycopg2.connect(database=constants.kSysAdminDatabaseName,
-										user=constants.kServerDBAdminName,
-										password=pPassword)
-			tempConnect.close()
+			tempConnect = Database()
+			tempConnect.Connect(constants.kSysAdminDatabaseName, self.UserName, pPassword)
+			tempConnect.Disconnect()
 			return True
-		except psycopg2.Error as e:
+		except exceptions.PasswordInvalidError:
 			#If this was a password failure, we're fine.
-			if e.pgcode != psycopg2.errorcodes.INVALID_PASSWORD:
-				return False
-			#Otherwise we need to abort.
-			else:
-				raise e
-				return False
+			return False
+		#Otherwise we need to abort.
+		except exceptions.SkyEyeError as e:
+			raise e
 	
-	def getCredentials(self):
+	def promptCredentials(self):
 		"""Returns True if we have or were able to get valid credentials,
 		returns False otherwise.
 		"""
 		
 		#First, see if we have valid credentials.
-		credentialsValid = False
 		#Do we have any credentials?
 		if self.haveCredentials():
 			#If so, try logging in.
 			password = self.getPassword()
 			try:
-				credentialsValid = self.canLogin(password)
+				#If those credentials worked, quit here.
+				if self.canLogin(password):
+					return True
 			except psycopg2.Error as e:
 				#If a connection error occured, abort now.
 				sLog.LogError(genericStrings.kFmtUnhandledError.format(e),
@@ -97,32 +159,28 @@ class Server(object):
 	
 		#If we don't have credentials or the credentials don't work,
 		#enter new credentials loop (max 3 tries):
-		if not credentialsValid:
-			#Abort at this step if we're in batch mode.
-			if self.batchMode:
-				sLog.LogError(genericStrings.kErrCannotPerformInBatchMode,
-							constants.kTagServer,
-							constants.kMethodGetCredentials)
-				return False
-			else:
-				credentialsValid = False
-				for i in xrange(constants.kMaxNumPrompts):  # @UnusedVariable
-					#Request new credentials.
-					if not self.requestNewCredentials():
-						sLog.LogError(constants.kErrCredentialRequestFailed,
-									constants.kTagServer,
-									constants.kMethodGetCredentials)
-						return False
-					#If the credentials work, exit loop.
-					if self.canLogin(self.getPassword()):
-						credentialsValid = True
-						break
+		#Abort at this step if we're in batch mode.
+		if self.BatchMode:
+			sLog.LogError(genericStrings.kErrCannotPerformInBatchMode,
+						constants.kTagServer,
+						constants.kMethodGetCredentials)
+			return False
+		else:
+			for i in xrange(constants.kMaxNumPrompts):  # @UnusedVariable
+				#Request new credentials.
+				if not self.requestNewCredentials():
+					sLog.LogError(constants.kErrCredentialRequestFailed,
+								constants.kTagServer,
+								constants.kMethodGetCredentials)
+					return False
+				#If the credentials work, exit loop.
+				if self.canLogin(self.getPassword()):
+					return True
 	
 		#Do we still not have a valid login?
-		if not credentialsValid:
-			#Report that login attempts have been exceeded.
-			sLog.LogError(constants.kErrTooManyPromptsFailed, constants.kTagServer, constants.kMethodGetCredentials)
-			return False
+		#Report that login attempts have been exceeded.
+		sLog.LogError(constants.kErrTooManyPromptsFailed, constants.kTagServer, constants.kMethodGetCredentials)
+		return False
 	
 	def setupLog(self, message, logLevel):
 		sLog.Log(message, logLevel, constants.kTagServer, constants.kMethodFirstTimeSetup)
@@ -139,11 +197,11 @@ class Server(object):
 			if not sysAdminDB.DropDatabase(subsystem.Name):
 				raise exceptions.InternalServiceError("Failed to drop database {0}!".format(subsystem.Name))
 		#Drop all users now.
-		if not sysAdminDB.DropUser(constants.kServerDBAdminName):
-			raise exceptions.InternalServiceError("Failed to drop user {0}!".format(constants.kServerDBAdminName))
+		if not sysAdminDB.DropUser(self.UserName):
+			raise exceptions.InternalServiceError("Failed to drop user {0}!".format(self.UserName))
 	
 	def createDBAdmin(self, sysAdminDB):
-		"""
+		"""Creates self.UserName as the server's administrator user.
 		Raises:
 			* InternalServiceError if the database administrator account couldn't be created.
 		"""
@@ -156,80 +214,81 @@ class Server(object):
 			
 		#Perform the CREATE USER query. This is the DB admin,
 		#so it should have rights to create a database.
-		if not sysAdminDB.CreateUser(constants.kServerDBAdminName,
+		if not sysAdminDB.CreateUser(self.UserName,
 									self.getPassword(),
-									isSuperUser=True,
 									canCreateDB=True):
-			raise exceptions.InternalServiceError("Failed to create user {0}!".format(constants.kServerDBAdminName))
+			raise exceptions.InternalServiceError("Failed to create user {0}!".format(self.UserName))
 		self.setupLog(constants.kFirstTimeSetupDBAdminCreated, LogLevel.Debug)
 	
-	def __init__(self, pBatchMode = True):
-		self.subsystems = []
-		#Database connections for subsystems.
-		self.subsystems.append(GeoWarehouse())
-		self.subsystems.append(ReconAnalyzer())
-		#If true, server should not accept standard input.
-		self.batchMode = True
-		#If true, server is connected to all internal services.
-		self.loggedIn = False
+	def ClearCredentials(self):
+		"""Deletes any existing password for the current user from the server's keychain!
+		"""
+		sLog.LogWarning(constants.kFmtWarnClearingCredentials.format(self.UserName),
+					constants.kTagServer, constants.kMethodClearCredentials)
+		if self.haveCredentials():
+			keychainOps.DeletePassword(KeychainConstants.kServiceDatabase)
 	
 	def Login(self):
-		"""Returns True if we successfully logged in, False otherwise.
+		"""Logs the user in.
+		Raises:
+			* PasswordMissingError if we couldn't get login credentials.
+			* InvalidPasswordError if the given password was somehow invalid.
+			* InternalServerError if a subsystem failed to start.
 		"""
+		
+		sLog.LogInfo(constants.kFmtLoginStarted.format(self.UserName),
+					constants.kTagServer,
+					constants.kMethodLogin)
+		
 		#If we absolutely couldn't get credentials, abort.
-		if not self.getCredentials():
-			sLog.LogError(constants.kErrLoginFailed, constants.kTagServer, constants.kMethodLogin)
-			return False
+		if not self.promptCredentials():
+			raise exceptions.PasswordMissingError(self.UserName)
 		
 		#Otherwise, connect to the databases with the credentials we got.
-		allConnected = False
-		user = constants.kServerDBAdminName
+		user = self.UserName
 		password = self.getPassword()
+		startedSubsystems = []
 		for subsystem in self.subsystems:
 			try:
 				subsystem.Start(user, password)
+				startedSubsystems.append(subsystem)
 			except exceptions.SkyEyeError as e:
-				allConnected = False
-				break
+				#If anything goes wrong, mark that we're not logged in.
+				self._loggedIn = False
+				#Shutdown all started subsystems.
+				for readySubsystem in startedSubsystems[::-1]:
+					readySubsystem.Shutdown()
+				#Bubble up the exception.
+				raise e
 			
-		allConnected = True
-		self.loggedIn = allConnected
+		self._loggedIn = True
 		
 		#Report if all subsystems could be connected.
-		if self.loggedIn:
-			sLog.LogInfo(constants.kLoginComplete, constants.kTagServer, constants.kMethodLogin)
-		else:
-			sLog.LogError(constants.kErrLoginFailed, constants.kTagServer, constants.kMethodLogin)
-		return self.loggedIn
+		sLog.LogInfo(constants.kFmtLoginComplete.format(self.UserName),
+					constants.kTagServer,
+					constants.kMethodLogin)
 	
 	def Logout(self):
 		"""Disconnects from the server.
 		"""
 		
-		#Disconnect from subsystems.
-		for subsystem in self.subsystems:
+		#Disconnect from subsystems in reverse order.
+		for subsystem in self.subsystems[::-1]:
 			subsystem.Shutdown()
 			
-		self.loggedIn = False
+		self._loggedIn = False
 		#Report that we're logged out.
-		sLog.LogInfo(constants.kLogoutComplete, constants.kTagServer, constants.kMethodLogout)
+		sLog.LogInfo(constants.kFmtLogoutComplete.format(self.UserName), constants.kTagServer, constants.kMethodLogout)
 	
 	def VerifyDatabases(self):
 		"""Checks that all tables in the server match expected schema.
 		Returns: A list of any verification problems with the server's subsystems.
 		Raises:
 			* WrongModeError if we're not actually logged into the server.
-			* PasswordMissingError if we couldn't get the database administrator's password. 
 		"""
 		#Abort if we're not logged in.
-		if not self.loggedIn:
+		if not self.LoggedIn:
 			raise exceptions.WrongModeError(constants.kErrNotLoggedIn)
-			return False
-		
-		#Get the admin login, pass that to the verify function.
-		if not self.haveCredentials():
-			raise exceptions.PasswordMissingError(constants.kErrNoAdminPassword)
-			return False
 		
 		#Perform verification.
 		results = []
@@ -249,9 +308,8 @@ class Server(object):
 		"""
 		
 		#If we're in batch mode, quit now.
-		if self.batchMode:
+		if self.BatchMode:
 			raise exceptions.WrongModeError(genericStrings.kErrCannotPerformInBatchMode)
-			return
 		
 		self.setupLog(constants.kFirstTimeSetupStarting, LogLevel.Info)
 		self.setupLog(constants.kFirstTimeSetupWarnDataLoss, LogLevel.Warning)
@@ -275,11 +333,11 @@ class Server(object):
 			#Bubble any other exception up.
 			except exceptions.SkyEyeError as e:
 				raise e
-				return
 				
 		#Clear all existing data.
 		self.dropEverything(sysAdminDB)
 		self.createDBAdmin(sysAdminDB)
+		dbAdminPW = self.getPassword()
 		
 		#Logout from server admin!
 		sysAdminDB.Disconnect()
@@ -287,7 +345,30 @@ class Server(object):
 		#Now iterate over each subsystem...
 		for subsystem in self.subsystems:
 			#Create the database and set up default tables.
-			subsystem.CreateAndSetup(constants.kSysAdminUserName, sysAdminPW)
+			subsystem.CreateAndSetup(self.UserName, dbAdminPW)
 	
 		#We're done!
 		self.setupLog(constants.kFirstTimeSetupComplete, LogLevel.Info)
+		
+	def DropDatabases(self):
+		"""Drops all databases! You must be logged out from the server first to do this.
+		Returns:
+			* True if all subsystems were dropped, False otherwise.
+		Raises:
+			* WrongModeError if we're logged into the server, or if we are in batch mode and require a password.
+			* PasswordMissingError if we couldn't get credentials to drop the database with.
+		"""
+		#Abort if we're logged in.
+		if self.LoggedIn:
+			raise exceptions.WrongModeError(constants.kErrLoggedIn)
+		
+		#Get our password.
+		if not self.promptCredentials():
+			raise exceptions.PasswordMissingError(self.UserName)
+		password = self.getPassword()
+		
+		#Drop all subsystems.
+		for subsystem in self.subsystems:
+			if not subsystem.Drop(self.UserName, password):
+				return False
+		return True
