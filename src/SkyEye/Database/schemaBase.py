@@ -177,5 +177,6 @@ class DatabaseDefinition(object):
 	"""
 	
 	def __init__(self):
+		self.Version = (1, 0)
 		self.Name = ""
 		self.AllSchemas = []

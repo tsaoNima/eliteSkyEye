@@ -27,16 +27,43 @@ class GeoWarehouse(SubsystemBase):
 		pass
 	
 	def onSetup(self):
-		#Generate default values.
+		#Create metatables to assist in merging:
+		#	* A dimension table listing all possible update sources. Should really be
+		#	defined in the DB definition to allow us to setup default values
+		#	("None" should be a possible source). Should contain:
+		#		* Source name (string)
+		#	* For each mergeable table, create a corresponding LastUpdatedBy metatable.
+		#	Each such metatable should contain:
+		#		* The date of the last update (datetime with timezone)
+		#		* The ID of the respective record (int FK)
+		#		* For each column in the data table,
+		#		a column recording the source of the updater (int FK)
 		pass
 	
 	def eddbImport(self):
 		#systems.json is a really big file, needs to be split up or streamed in somehow.
 		#In any case, has data for each system.
-		#Figure out what data the import can overwrite.
-		#Figure out which systems need overwriting.
-		#For those systems:
-			#Overwrite with EDDB's data.
+		#It's 23 MB, so we want to stream it.
+		#For each system:
+		#	* If the system isn't already in the GDW, insert it.
+		#	* If the system does exist:
+		#		* Find any columns that were NOT last updated by a SkyEye user,
+		#		mark those for overwrite via update. Since a column can have no
+		#		data source, this also covers NULL cells.
+		pass
+	
+	def insertSystem(self, dataSourceId):
+		#Do the INSERT query.
+		#For each value we set, mark the update source in the metarow.
+		#Do the metatable's INSERT query.
+		pass
+	
+	def updateSystem(self, dataSourceId):
+		#Basically consider each element besides the update source optional.
+		#Whatever was given a value we then later update the meta for.
+		#Do the UPDATE query.
+		#For each value we set, mark the update source in the metarow.
+		#Do the metatable's UPDATE query.
 		pass
 	
 	def __init__(self):

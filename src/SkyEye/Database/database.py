@@ -693,6 +693,7 @@ class Database(object):
 					constants.kMethodVerifyDatabase)
 		
 		#Ideally we should check schema version first.
+		#Check the version meta-table.
 		pass
 		
 		#The list of things that failed verification.
@@ -721,6 +722,8 @@ class Database(object):
 		if self.dbName != databaseDefinition.Name:
 			raise exceptions.InvalidParameterError(constants.kFmtErrDefinitionNameDoesNotMatch.format(databaseDefinition.Name,
 																									self.dbName))
+		#Create a meta-table that contains the version information.
+		#The table only needs two ints.
 		
 		#Now setup the tables.
 		sLog.LogDebug(constants.kFmtSetupDatabaseStarting.format(databaseDefinition.Name),

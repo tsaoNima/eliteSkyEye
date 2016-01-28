@@ -15,6 +15,7 @@ class GDWSchemas(DatabaseDefinition):
 	"""
 	
 	def __init__(self):
+		self.Version = (1, 0)
 		self.Name = "geo_data_warehouse"
 		self.AllSchemas = [
 						TableDefinition("celestial_types",
@@ -114,5 +115,12 @@ class GDWSchemas(DatabaseDefinition):
 													Column("entered_system_date", Types.Timestamp),
 													Column("left_system_date", Types.Timestamp),
 													Column("last_updated_date", Types.Timestamp, (Modifiers.NotNull,))
-													))
+													)),
+						#TODO: Add a data source metatable. Values should include:
+						#	* None
+						#	* SkyEye Server
+						#	* SkyEye User
+						#	* EDDB
+						#	* INARA
+						pass
 						]

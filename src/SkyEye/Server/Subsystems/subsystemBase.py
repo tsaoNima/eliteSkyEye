@@ -37,12 +37,13 @@ class SubsystemBase(object):
 		"""
 		pass
 	
-	def __init__(self, pName, pDefinition):
+	def __init__(self, pName, pDefinition, pDefaults=None):
 		"""Initializer.
 		"""
 		
 		self.Database = Database()
 		self.Definition = pDefinition
+		self.Defaults = pDefaults
 		self.Name = pName
 	
 	def CreateAndSetup(self, userName, password):
@@ -134,6 +135,17 @@ class SubsystemBase(object):
 		
 		if not self.Database.SetupDatabase(self.Definition):
 			return False
+		
+		#Set up metatables:
+		#	* Version:
+		#		* Major version (int)
+		#		* Minor version (int)
+		#	* Default paths to IDs. Consists of:
+		#		* Value's path (string)
+		#		* Value's record ID (probably an int due to SERIAL).
+		pass
+		self.setupDefaults()
+	
 		self.onSetup()
 		
 	def Verify(self):
@@ -165,6 +177,9 @@ class SubsystemBase(object):
 		#Connect to the database.
 		self.Database.Connect(self.Definition.Name, userName, password)
 		
+		#Pull metadata info.
+		pass
+		
 		#Do subclass-specific work.
 		self.onStart()
 		
@@ -189,3 +204,26 @@ class SubsystemBase(object):
 		sLog.LogDebug(constants.kFmtShutDownSubsystem.format(self.Name),
 					constants.kTagSubsystemBase,
 					constants.kMethodStart)
+		
+	def setupDefaults(self):
+		if self.Defaults is None:
+			return
+		
+		#For each table:
+		#	For each row in the table:
+		#		Insert that default row into the table.
+		#		Add the row's ID and path to the subsystem's default lookup metatable.
+		pass
+	
+	def loadDefaults(self):
+		#Do a SELECT * on the default lookup metatable.
+		#For each row:
+		#	Insert the row's ID into the subsytem's lookup dictionary at the row's path.
+		pass
+	
+	def DefaultForKey(self, defaultPath):
+		#Abort if we're not logged in.
+		#Is this path in the lookup dictionary?
+		#If not, return None.
+		#Otherwise, index into the dictionary.
+		pass

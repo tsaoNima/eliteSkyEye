@@ -14,6 +14,7 @@ class RDASchemas(DatabaseDefinition):
 	"""Describes all RDA tables.
 	"""
 	def __init__(self):
+		self.Version = (1, 0)
 		self.Name = "recon_data_analyzer"
 		self.AllSchemas = [
 						TableDefinition("event_types",
