@@ -3,23 +3,17 @@
 from setuptools import setup, find_packages
 
 setup(
-	name = "SkyEye",
+	name = "skyeye",
 	version = "0.1",
 	packages = find_packages(),
 	include_package_data = True,
-	description = "Placeholder text for description.",
+	description = "Strategic analyzer and general map system.",
 	url = "none",
-	author = "Tsao Nima",
+	author = "TsaoNima",
 	author_email = "none@none.none",
 	license = "MIT Who Cares License",
 	long_description = open("readme.txt").read(), 
 	scripts = ["SkyEye/skyEye.py", "SkyEye/testAll.py"],
-	install_requires = ["psycopg2",
-					"enum34",
-					"colorama",
-					"pytz",
-					"keyring",
-					"pypiwin32",
-					"ruamel.yaml"],
+	install_requires = ["enum34", "servbase"],
 	zip_safe = False
 	)

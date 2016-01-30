@@ -2,11 +2,12 @@ import sys
 import os
 import constants
 import ruamel.yaml  # @UnresolvedImport
-from Server import server
-from Logging.structs import LogLevel
-from Logging import log
-from Exceptions import exceptions
-from Logging import consoleListener
+import ServBase
+from ServBase.Server import server
+from ServBase.Logging.structs import LogLevel
+from ServBase.Logging import log
+from ServBase.Exceptions import exceptions
+from ServBase.Logging import consoleListener
 
 class SkyEyeDaemon(object):
 	def loadSettings(self):
